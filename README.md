@@ -27,12 +27,12 @@ A single self-contained `index.html` file — plain HTML, CSS, and JavaScript. N
 
 **Your show list is stored only in your browser's local storage on your device.** This means:
 
-- **No backup.** If you clear your browser's site data, switch browsers, or switch devices, your list is gone. There is no account, no cloud sync, and no server storing anything.
-- **No sharing between devices.** Adding a show on your phone doesn't make it appear on your laptop. Each browser/device has its own separate list.
-- **Nothing is sent anywhere except TVmaze.** The only network requests this app makes are to `api.tvmaze.com`, to look up shows and episodes. Your watch list itself never leaves your device.
-- **The code being public does not expose your data.** Anyone can view or copy this code, and anyone can use their own copy of the app — but they cannot see or change *your* list, since it's local to your own browser. See the note on hosting below for why the app needs to run from a real web address rather than a downloaded file.
-
-If you want your list backed up or synced, you'd need to add that yourself (e.g., wiring up a small cloud storage backend) — it's not built in.
+- **No automatic backup or sync.** There is no account and no server storing anything.
+- **iOS can clear it unexpectedly.** For apps added to the home screen, iOS does not guarantee `localStorage` persists indefinitely — it can be cleared under storage pressure, after a restart, or after a period of inactivity. This is a platform limitation, not something the app can prevent.
+- **Manual backup/restore is built in** for exactly this reason: tap the ↻ icon on the main screen to get a copy of your data (copy it to Notes or anywhere else you like), and paste it back in later to restore your list if it ever disappears.
+- **No sharing between devices.** Adding a show on your phone doesn't make it appear on your laptop. Each browser/device has its own separate list, though you can move a backup code between devices manually.
+- **Nothing is sent anywhere except TVmaze.** The only network requests this app makes are to `api.tvmaze.com`. Your watch list itself never leaves your device unless you manually copy/paste a backup code somewhere.
+- **The code being public does not expose your data** — see the hosting note below.
 
 ## Hosting your own copy on GitHub Pages
 
@@ -43,9 +43,11 @@ This needs to run from a real `https://` web address rather than being opened as
 3. Go to **Settings → Pages**, set Source to **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
 4. After a minute or so, GitHub gives you a URL like `https://yourusername.github.io/my-shows/`. Open that on your phone, then use Safari's **Share → Add to Home Screen** to get an app-like icon.
 
-## Use as is
-You can use this app as is without having to move to your own Github account. Just point your browser to https://heuristicsecurity.com/TV-Time
-All show data you add is kept local on the device you accessed the URL from.
+### Or use an already-hosted copy
+
+If you'd rather skip hosting it yourself, there's a running instance here: **https://heuristicsecurity.com/TV-Time**
+
+Your data is still private and local to your own device even using this shared instance — the app has no backend and no database. Every request it makes (aside from looking up show/episode data from TVmaze) stays in your browser's local storage, regardless of which server happens to be serving the static `index.html`/JS files. The same iOS storage-eviction caveat described above still applies either way, since that's about your browser's storage, not about who's hosting the page.
 
 ## Customizing this with Claude
 

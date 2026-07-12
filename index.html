@@ -378,6 +378,7 @@ function render() {
   if (state.view === 'loading') return renderLoading();
   if (state.view === 'add') return renderAdd();
   if (state.view === 'detail') return renderDetail();
+  if (state.view === 'backup') return renderBackup();
   return renderList();
 }
 
@@ -406,7 +407,7 @@ function renderList() {
   }));
 
   var html = '';
-  html += '<div class="top-bar"><h1>My shows</h1><button class="icon-btn" id="add-btn" aria-label="Add show">+</button></div>';
+  html += '<div class="top-bar"><h1>My shows</h1><div style="display:flex;gap:4px;"><button class="icon-btn" id="backup-btn" aria-label="Backup and restore" style="font-size:18px;">&#8635;</button><button class="icon-btn" id="add-btn" aria-label="Add show">+</button></div></div>';
 
   if (state.errorBanner) {
     html += '<p class="error-text">' + escapeHtml(state.errorBanner) + '</p>';
@@ -416,6 +417,7 @@ function renderList() {
     html += '<div class="empty">No shows yet.<br>Tap + to add the first one.</div>';
     root.innerHTML = html;
     document.getElementById('add-btn').onclick = openAddFlow;
+    document.getElementById('backup-btn').onclick = openBackupFlow;
     return;
   }
 
@@ -426,6 +428,7 @@ function renderList() {
 
   root.innerHTML = html;
   document.getElementById('add-btn').onclick = openAddFlow;
+  document.getElementById('backup-btn').onclick = openBackupFlow;
 
   entries.forEach(function (e) {
     var rowEl = document.getElementById('row-' + e.item.showId);
@@ -555,6 +558,105 @@ function formatDate(airdate) {
 // ---------------------------------------------------------------------
 // Add-show flow
 // ---------------------------------------------------------------------
+
+// ---------------------------------------------------------------------
+// Backup / restore
+//
+// iOS does not guarantee localStorage survives indefinitely for
+// home-screen web apps (it can be cleared under storage pressure, after
+// restarts, or after periods of inactivity). This gives the user a way to
+// manually save and restore their data outside of localStorage entirely.
+// ---------------------------------------------------------------------
+
+function openBackupFlow() {
+  state.backupFlow = { restoreInput: '', restoreError: '', restoreSuccess: false, copied: false };
+  state.view = 'backup';
+  render();
+}
+
+function renderBackup() {
+  var bf = state.backupFlow;
+  var backupCode = JSON.stringify(state.library);
+
+  var html = '';
+  html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button><h1 style="margin:0;">Backup &amp; restore</h1><span></span></div>';
+
+  html += '<p class="field-label">Your backup code</p>';
+  html += '<p class="hint" style="margin-bottom:8px;">Copy this and save it somewhere (like Notes). If your list ever disappears, paste it back in below to restore it.</p>';
+  html += '<textarea id="backup-output" readonly rows="4" style="width:100%;font-family:ui-monospace,monospace;font-size:12px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);">' + escapeHtml(backupCode) + '</textarea>';
+  html += '<button id="copy-backup-btn" style="margin-top:8px;width:100%;">' + (bf.copied ? 'Copied' : 'Copy backup code') + '</button>';
+
+  html += '<p class="field-label" style="margin-top:28px;">Restore from a backup code</p>';
+  html += '<textarea id="restore-input" rows="4" placeholder="Paste your backup code here" style="width:100%;font-family:ui-monospace,monospace;font-size:12px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">' + escapeHtml(bf.restoreInput) + '</textarea>';
+  if (bf.restoreError) html += '<p class="error-text">' + escapeHtml(bf.restoreError) + '</p>';
+  if (bf.restoreSuccess) html += '<p class="hint" style="color:var(--accent);">Restored successfully.</p>';
+  html += '<button class="primary" id="restore-btn" style="margin-top:8px;">Restore</button>';
+  html += '<p class="hint" style="margin-top:8px;">This replaces your current list on this device with the one in the backup code.</p>';
+
+  root.innerHTML = html;
+
+  document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
+
+  document.getElementById('copy-backup-btn').onclick = function () {
+    var output = document.getElementById('backup-output');
+    output.select();
+    var copySucceeded = false;
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(backupCode);
+        copySucceeded = true;
+      } else if (document.execCommand) {
+        copySucceeded = document.execCommand('copy');
+      }
+    } catch (e) {
+      copySucceeded = false;
+    }
+    bf.copied = copySucceeded;
+    render();
+    if (!copySucceeded) {
+      // Clipboard access can be blocked in some contexts; the text is still
+      // selected, so the user can copy manually.
+    }
+  };
+
+  document.getElementById('restore-input').oninput = function (e) { bf.restoreInput = e.target.value; };
+
+  document.getElementById('restore-btn').onclick = function () {
+    bf.restoreError = '';
+    bf.restoreSuccess = false;
+    var parsed;
+    try {
+      parsed = JSON.parse(bf.restoreInput);
+    } catch (e) {
+      bf.restoreError = 'That does not look like a valid backup code.';
+      render();
+      return;
+    }
+    if (!Array.isArray(parsed)) {
+      bf.restoreError = 'That does not look like a valid backup code.';
+      render();
+      return;
+    }
+    var isValid = parsed.every(function (item) {
+      return item && typeof item.showId === 'number';
+    });
+    if (!isValid) {
+      bf.restoreError = 'That does not look like a valid backup code.';
+      render();
+      return;
+    }
+
+    state.library = parsed;
+    state.computed = {};
+    saveLibrary(state.library);
+    bf.restoreSuccess = true;
+    render();
+    refreshComputedFor(state.library).then(function () {
+      state.view = 'list';
+      render();
+    });
+  };
+}
 
 function openAddFlow() {
   state.addFlow = { query: '', results: [], selected: null, platform: '', season: '', episode: '', error: '', searchStatus: 'idle', searchError: '' };
