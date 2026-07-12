@@ -34,6 +34,20 @@ A single self-contained `index.html` file — plain HTML, CSS, and JavaScript. N
 - **Nothing is sent anywhere except TVmaze.** The only network requests this app makes are to `api.tvmaze.com`. Your watch list itself never leaves your device unless you manually copy/paste a backup code somewhere.
 - **The code being public does not expose your data** — see the hosting note below.
 
+## Backup and restore
+
+Tap the ↻ icon on the main screen (next to the + button) to open **Backup & restore**.
+
+- **Copy backup code** — copies your entire list (every show, its platform, and your watched progress) as a block of text. Save it somewhere you can get back to — Notes, an email to yourself, wherever.
+- **Restore from a backup code** — paste a previously copied backup code into the box and tap **Restore**. This replaces whatever's currently on the device with the contents of the backup code, so use it when your list has disappeared or you're setting up a new device.
+
+A few things worth knowing:
+
+- The backup code is plain text — you can move it between devices any way you'd move text (Notes with iCloud sync, Messages, email, AirDrop), and it works the same whether you're going Mac → iPhone, iPhone → iPhone, or any other combination.
+- There's nothing device-specific baked into it, so restoring on a different device or a different hosted copy of the app works identically to restoring on the same one.
+- Restoring is a full replace, not a merge — if you have shows on the device that aren't in the backup code, they'll be gone after restoring. Copy a fresh backup code first if you want to keep both.
+- This is a manual step, not automatic — the app doesn't back itself up on a schedule, so it's worth copying a fresh code occasionally, especially before an iOS update or if you haven't opened the app in a while (see the storage note above on why).
+
 ## Hosting your own copy on GitHub Pages
 
 This needs to run from a real `https://` web address rather than being opened as a downloaded file — iOS Safari in particular blocks network requests (like the TVmaze lookups) from local files for security reasons, even though desktop Safari usually allows it.
