@@ -43,6 +43,10 @@ This needs to run from a real `https://` web address rather than being opened as
 3. Go to **Settings → Pages**, set Source to **Deploy from a branch**, branch `main`, folder `/ (root)`, and save.
 4. After a minute or so, GitHub gives you a URL like `https://yourusername.github.io/my-shows/`. Open that on your phone, then use Safari's **Share → Add to Home Screen** to get an app-like icon.
 
+## Use as is
+You can use this app as is without having to move to your own Github account. Just point your browser to https://heuristicsecurity.com/TV-Time
+All show data you add is kept local on the device you accessed the URL from.
+
 ## Customizing this with Claude
 
 This app was originally built with [Claude](https://claude.ai). To make changes (add a feature, change the design, fix something), the easiest path is to start a new conversation with Claude and give it context, since a fresh conversation won't know this app's history or the decisions baked into it.
