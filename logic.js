@@ -81,6 +81,9 @@ function sortWithinGroup(entries, group) {
   if (group === 'upcoming') {
     return entries.slice().sort((a, b) => a.status.nextEpisode.airdate.localeCompare(b.status.nextEpisode.airdate));
   }
+  if (group === 'pending' || group === 'completed') {
+    return entries.slice().sort((a, b) => a.show.name.localeCompare(b.show.name));
+  }
   return entries;
 }
 
@@ -90,6 +93,8 @@ function groupShows(showsWithStatus) {
     groups[entry.status.group].push(entry);
   }
   groups.upcoming = sortWithinGroup(groups.upcoming, 'upcoming');
+  groups.pending = sortWithinGroup(groups.pending, 'pending');
+  groups.completed = sortWithinGroup(groups.completed, 'completed');
   return groups;
 }
 

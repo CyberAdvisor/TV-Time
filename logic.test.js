@@ -166,6 +166,28 @@ const TODAY = '2026-07-12';
   assert.strictEqual(groups.pending.length, 1);
 }
 
+// --- groupShows: pending and completed sort alphabetically by show name ---
+{
+  const entries = [
+    { show: { name: 'Zebra Show' }, status: { group: 'pending', nextEpisode: null } },
+    { show: { name: 'Apple Show' }, status: { group: 'pending', nextEpisode: null } },
+    { show: { name: 'Mango Show' }, status: { group: 'pending', nextEpisode: null } },
+    { show: { name: 'Zima Blue' }, status: { group: 'completed', nextEpisode: null } },
+    { show: { name: 'Alpha Show' }, status: { group: 'completed', nextEpisode: null } }
+  ];
+  const groups = groupShows(entries);
+  assert.deepStrictEqual(
+    groups.pending.map(e => e.show.name),
+    ['Apple Show', 'Mango Show', 'Zebra Show'],
+    'pending group is sorted alphabetically'
+  );
+  assert.deepStrictEqual(
+    groups.completed.map(e => e.show.name),
+    ['Alpha Show', 'Zima Blue'],
+    'completed group is sorted alphabetically'
+  );
+}
+
 // --- formatCountdown ---
 {
   assert.strictEqual(formatCountdown(0, TODAY), 'Today');
