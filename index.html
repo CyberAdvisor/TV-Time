@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>My Shows</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f7f7;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-muted: #9a9a9a;
+    --accent: #0a66c2;
+    --accent-bg: #e8f1fb;
+    --danger: #c02020;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --surface: #1c1c1c;
+      --border: #333333;
+      --text: #f0f0f0;
+      --text-secondary: #a0a0a0;
+      --text-muted: #777777;
+      --accent: #6db2ff;
+      --accent-bg: #16283b;
+      --danger: #ff6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+  #app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 16px) + 16px);
+    min-height: 100vh;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 12px 0 16px;
+  }
+  .section-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 20px 0 6px;
+    text-transform: none;
+  }
+  .card-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .row:last-child { border-bottom: none; }
+  .row:active { background: var(--accent-bg); }
+  .row-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin: 0;
+  }
+  .row-title .platform {
+    font-weight: 400;
+    color: var(--text-secondary);
+  }
+  .row-sub {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 3px 0 0;
+    font-family: ui-monospace, "SF Mono", monospace;
+  }
+  .row-right {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+  }
+  button:active { background: var(--accent-bg); }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+    width: 100%;
+    padding: 12px;
+    font-size: 15px;
+  }
+  button.text {
+    border: none;
+    background: none;
+    color: var(--accent);
+    padding: 4px 6px;
+  }
+  input[type="text"], input[type="number"] {
+    font-family: inherit;
+    font-size: 16px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    width: 100%;
+  }
+  .empty {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 60px 20px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .icon-btn {
+    border: none;
+    background: none;
+    font-size: 22px;
+    line-height: 1;
+    padding: 4px 8px;
+    color: var(--accent);
+  }
+  .field-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 6px;
+  }
+  .field { margin-bottom: 16px; }
+  .field-row { display: flex; gap: 10px; }
+  .field-row .field { flex: 1; }
+  .hint { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
+  .search-result {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+  }
+  .search-result img {
+    width: 36px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .search-result.selected {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .search-result-name { font-size: 14px; font-weight: 500; margin: 0; }
+  .search-result-meta { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0; }
+  .detail-table {
+    width: 100%;
+    font-size: 14px;
+    border-collapse: collapse;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 4px 14px;
+  }
+  .detail-table td { padding: 8px 0; }
+  .detail-table td:first-child { color: var(--text-secondary); }
+  .detail-table td:last-child { text-align: right; }
+  .synopsis { font-size: 14px; line-height: 1.6; margin: 0 0 20px; }
+  .error-text { color: var(--danger); font-size: 13px; margin: 6px 0 0; }
+  .loading { text-align: center; color: var(--text-secondary); padding: 40px; font-size: 14px; }
+  .remove-link { color: var(--danger); font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ---------------------------------------------------------------------
+// Core logic (pure functions, mirrors logic.js / logic.test.js)
+// ---------------------------------------------------------------------
+
+function sortedEpisodes(rawEpisodes) {
+  return rawEpisodes
+    .filter(function (e) { return e.season != null; })
+    .slice()
+    .sort(function (a, b) {
+      if (a.airdate && b.airdate) {
+        if (a.airdate !== b.airdate) return a.airdate.localeCompare(b.airdate);
+        return (a.number == null ? Infinity : a.number) - (b.number == null ? Infinity : b.number);
+      }
+      if (a.airdate && !b.airdate) return -1;
+      if (!a.airdate && b.airdate) return 1;
+      return a.season - b.season || (a.number == null ? Infinity : a.number) - (b.number == null ? Infinity : b.number);
+    });
+}
+
+function isSpecial(episode) {
+  return episode.number == null;
+}
+
+function formatEpisodeCode(episode) {
+  var s = pad(episode.season);
+  if (isSpecial(episode)) return 'S' + s + ' Special';
+  return 'S' + s + 'E' + pad(episode.number);
+}
+
+function findWatchedIndex(episodes, watchedEpisodeId) {
+  if (watchedEpisodeId == null) return -1;
+  return episodes.findIndex(function (e) { return e.id === watchedEpisodeId; });
+}
+
+// Resolves a user-entered season/number (only ever used for regular episodes,
+// since specials aren't nameable this way) to the episode's unique id.
+function findEpisodeIdBySeasonNumber(episodes, season, number) {
+  var match = episodes.find(function (e) { return e.season === season && e.number === number; });
+  return match ? match.id : null;
+}
+
+function computeShowStatus(show, episodes, watchedEpisodeId, today) {
+  today = today || new Date().toISOString().slice(0, 10);
+  var watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
+  var nextIdx = watchedIdx + 1;
+
+  if (nextIdx >= episodes.length) {
+    if (show.status === 'Ended') return { group: 'completed', nextEpisode: null };
+    return { group: 'pending', nextEpisode: null };
+  }
+
+  var nextEpisode = episodes[nextIdx];
+
+  if (!nextEpisode.airdate) return { group: 'pending', nextEpisode: nextEpisode };
+
+  if (nextEpisode.airdate <= today) return { group: 'available', nextEpisode: nextEpisode };
+
+  var daysUntil = Math.round(
+    (new Date(nextEpisode.airdate + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000
+  );
+  return { group: 'upcoming', nextEpisode: nextEpisode, daysUntil: daysUntil };
+}
+
+function sortWithinGroup(entries, group) {
+  if (group === 'upcoming') {
+    return entries.slice().sort(function (a, b) {
+      return a.status.nextEpisode.airdate.localeCompare(b.status.nextEpisode.airdate);
+    });
+  }
+  return entries;
+}
+
+function groupShows(showsWithStatus) {
+  var groups = { available: [], upcoming: [], pending: [], completed: [] };
+  for (var i = 0; i < showsWithStatus.length; i++) {
+    groups[showsWithStatus[i].status.group].push(showsWithStatus[i]);
+  }
+  groups.upcoming = sortWithinGroup(groups.upcoming, 'upcoming');
+  return groups;
+}
+
+function formatCountdown(daysUntil, airdate) {
+  if (daysUntil === 0) return 'Today';
+  if (daysUntil === 1) return 'Tomorrow';
+  var d = new Date(airdate + 'T00:00:00');
+  if (daysUntil <= 6) {
+    return d.toLocaleDateString(undefined, { weekday: 'short' }) + ', ' + daysUntil + ' days';
+  }
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function stripHtml(html) {
+  if (!html) return '';
+  var div = document.createElement('div');
+  div.innerHTML = html;
+  return div.textContent || div.innerText || '';
+}
+
+// ---------------------------------------------------------------------
+// Storage
+// ---------------------------------------------------------------------
+
+var STORAGE_KEY = 'my-shows-library-v1';
+
+function loadLibrary() {
+  try {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    var library = raw ? JSON.parse(raw) : [];
+    // Migrate pre-existing entries saved before watched-episode tracking
+    // switched from season/number (ambiguous for specials sharing a season)
+    // to a unique episode id.
+    library.forEach(function (item) {
+      if (item.watchedThrough && item.watchedEpisodeId === undefined) {
+        item.pendingSeasonNumber = item.watchedThrough;
+        item.watchedEpisodeId = null;
+        delete item.watchedThrough;
+      }
+    });
+    return Promise.resolve(library);
+  } catch (e) {
+    return Promise.resolve([]);
+  }
+}
+
+function saveLibrary(library) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
+  } catch (e) {
+    state.errorBanner = 'Could not save. Your device storage may be full or private browsing is on.';
+  }
+  return Promise.resolve();
+}
+
+// ---------------------------------------------------------------------
+// TVmaze API
+// ---------------------------------------------------------------------
+
+function searchShows(query) {
+  return fetch('https://api.tvmaze.com/search/shows?q=' + encodeURIComponent(query))
+    .then(function (r) {
+      if (!r.ok) throw new Error('TVmaze returned ' + r.status);
+      return r.json();
+    });
+}
+
+function fetchShowWithEpisodes(showId) {
+  return Promise.all([
+    fetch('https://api.tvmaze.com/shows/' + showId).then(function (r) { return r.json(); }),
+    fetch('https://api.tvmaze.com/shows/' + showId + '/episodes?specials=1').then(function (r) { return r.json(); })
+  ]).then(function (results) {
+    var show = results[0];
+    var episodes = results[1];
+    show._embedded = { episodes: episodes };
+    return show;
+  });
+}
+
+// ---------------------------------------------------------------------
+// App state
+// ---------------------------------------------------------------------
+
+var state = {
+  view: 'loading', // loading | list | add | detail
+  library: [],
+  computed: {}, // showId -> { show, episodes, status }
+  addFlow: { query: '', results: [], selected: null, platform: '', season: '', episode: '', error: '' },
+  detailShowId: null,
+  errorBanner: ''
+};
+
+var root = document.getElementById('app');
+
+function render() {
+  if (state.view === 'loading') return renderLoading();
+  if (state.view === 'add') return renderAdd();
+  if (state.view === 'detail') return renderDetail();
+  return renderList();
+}
+
+function renderLoading() {
+  root.innerHTML = '<div class="loading">Loading your shows…</div>';
+}
+
+function el(html) {
+  var t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstChild;
+}
+
+// ---------------------------------------------------------------------
+// List view
+// ---------------------------------------------------------------------
+
+function renderList() {
+  var entries = state.library.map(function (item) {
+    var c = state.computed[item.showId];
+    return c ? { item: item, show: c.show, status: c.status } : null;
+  }).filter(Boolean);
+
+  var groups = groupShows(entries.map(function (e) {
+    return { item: e.item, show: e.show, status: e.status };
+  }));
+
+  var html = '';
+  html += '<div class="top-bar"><h1>My shows</h1><button class="icon-btn" id="add-btn" aria-label="Add show">+</button></div>';
+
+  if (state.errorBanner) {
+    html += '<p class="error-text">' + escapeHtml(state.errorBanner) + '</p>';
+  }
+
+  if (entries.length === 0) {
+    html += '<div class="empty">No shows yet.<br>Tap + to add the first one.</div>';
+    root.innerHTML = html;
+    document.getElementById('add-btn').onclick = openAddFlow;
+    return;
+  }
+
+  html += renderGroup('Available now', groups.available, 'available');
+  html += renderGroup('Upcoming', groups.upcoming, 'upcoming');
+  html += renderGroup('Pending return', groups.pending, 'pending');
+  html += renderGroup('Completed', groups.completed, 'completed');
+
+  root.innerHTML = html;
+  document.getElementById('add-btn').onclick = openAddFlow;
+
+  entries.forEach(function (e) {
+    var rowEl = document.getElementById('row-' + e.item.showId);
+    if (!rowEl) return;
+    rowEl.onclick = function () { openDetail(e.item.showId); };
+    var markBtn = document.getElementById('mark-' + e.item.showId);
+    if (markBtn) {
+      markBtn.onclick = function (ev) {
+        ev.stopPropagation();
+        markWatched(e.item.showId);
+      };
+    }
+  });
+}
+
+function renderGroup(label, entries, groupKey) {
+  if (entries.length === 0) return '';
+  var html = '<p class="section-label">' + label + '</p><div class="card-list">';
+  entries.forEach(function (e) {
+    html += renderRow(e, groupKey);
+  });
+  html += '</div>';
+  return html;
+}
+
+function renderRow(e, groupKey) {
+  var item = e.item, show = e.show, status = e.status;
+  var platformText = item.platform ? ' <span class="platform">- ' + escapeHtml(item.platform) + '</span>' : '';
+  var titleHtml = '<p class="row-title">' + escapeHtml(show.name) + platformText + '</p>';
+
+  var subText = '';
+  if (status.nextEpisode) {
+    var code = formatEpisodeCode(status.nextEpisode);
+    subText = code + (status.nextEpisode.name ? ' - ' + escapeHtml(status.nextEpisode.name) : '');
+  } else if (groupKey === 'completed') {
+    subText = 'All episodes watched';
+  } else {
+    subText = 'Renewed - no date yet';
+  }
+
+  var right = '';
+  if (groupKey === 'available') {
+    right = '<button class="text" id="mark-' + item.showId + '">Mark watched</button>';
+  } else if (groupKey === 'upcoming') {
+    right = '<span class="row-right">' + formatCountdown(status.daysUntil, status.nextEpisode.airdate) + '</span>';
+  }
+
+  return '<div class="row" id="row-' + item.showId + '">' +
+    '<div>' + titleHtml + '<p class="row-sub">' + subText + '</p></div>' +
+    '<div class="row-right">' + right + '</div>' +
+    '</div>';
+}
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+// ---------------------------------------------------------------------
+// Detail view
+// ---------------------------------------------------------------------
+
+function openDetail(showId) {
+  state.detailShowId = showId;
+  state.view = 'detail';
+  render();
+}
+
+function renderDetail() {
+  var item = state.library.find(function (i) { return i.showId === state.detailShowId; });
+  var c = state.computed[state.detailShowId];
+  if (!item || !c) { state.view = 'list'; return render(); }
+
+  var status = c.status;
+  var ep = status.nextEpisode;
+
+  var html = '';
+  html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button></div>';
+  html += '<h1 style="margin-bottom:2px;">' + escapeHtml(c.show.name) + '</h1>';
+
+  if (ep) {
+    html += '<p class="row-sub" style="margin-bottom:16px;">' + formatEpisodeCode(ep) + (ep.name ? ' - ' + escapeHtml(ep.name) : '') + '</p>';
+  } else {
+    html += '<p class="row-sub" style="margin-bottom:16px;">' + (status.group === 'completed' ? 'All episodes watched' : 'Renewed - no date yet') + '</p>';
+  }
+
+  if (item.platform) {
+    html += '<p class="field-label">Watching on</p><p style="margin:0 0 16px; font-size:15px;">' + escapeHtml(item.platform) + '</p>';
+  }
+
+  if (ep) {
+    html += '<table class="detail-table">';
+    html += '<tr><td>Air date</td><td>' + (ep.airdate ? formatDate(ep.airdate) : 'Unannounced') + '</td></tr>';
+    if (ep.runtime) html += '<tr><td>Runtime</td><td>' + ep.runtime + ' min</td></tr>';
+    html += '<tr><td>Season</td><td>' + ep.season + '</td></tr>';
+    html += '</table>';
+
+    var summary = stripHtml(ep.summary);
+    html += '<p class="field-label" style="margin-top:16px;">Synopsis</p>';
+    html += '<p class="synopsis">' + escapeHtml(summary || 'No synopsis available.') + '</p>';
+
+    if (status.group === 'available') {
+      html += '<button class="primary" id="mark-watched-btn">Mark watched</button>';
+    }
+  }
+
+  html += '<p style="margin-top:24px; text-align:center;"><a href="#" class="remove-link" id="remove-link">Remove show</a></p>';
+
+  root.innerHTML = html;
+  document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
+  var markBtn = document.getElementById('mark-watched-btn');
+  if (markBtn) markBtn.onclick = function () { markWatched(item.showId, true); };
+  document.getElementById('remove-link').onclick = function (ev) {
+    ev.preventDefault();
+    removeShow(item.showId);
+  };
+}
+
+function formatDate(airdate) {
+  var d = new Date(airdate + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+// ---------------------------------------------------------------------
+// Add-show flow
+// ---------------------------------------------------------------------
+
+function openAddFlow() {
+  state.addFlow = { query: '', results: [], selected: null, platform: '', season: '', episode: '', error: '', searchStatus: 'idle', searchError: '' };
+  state.view = 'add';
+  render();
+}
+
+function searchResultsHtml() {
+  var af = state.addFlow;
+
+  if (af.searchStatus === 'error') {
+    return '<p class="error-text" style="margin-top:10px;">Search failed: ' + escapeHtml(af.searchError) + '</p>';
+  }
+  if (af.searchStatus === 'empty') {
+    return '<p class="hint" style="margin-top:10px;">No shows found for "' + escapeHtml(af.query) + '".</p>';
+  }
+  if (af.results.length === 0) return '';
+
+  var html = '<div style="margin-top:10px;">';
+  af.results.forEach(function (r) {
+    var s = r.show;
+    var selected = af.selected && af.selected.id === s.id;
+    var year = s.premiered ? s.premiered.slice(0, 4) : '';
+    var network = (s.network && s.network.name) || (s.webChannel && s.webChannel.name) || '';
+    html += '<div class="search-result' + (selected ? ' selected' : '') + '" data-id="' + s.id + '">';
+    html += s.image ? '<img src="' + s.image.medium + '" alt="" />' : '<div style="width:36px;height:50px;flex-shrink:0;"></div>';
+    html += '<div><p class="search-result-name">' + escapeHtml(s.name) + '</p>';
+    html += '<p class="search-result-meta">' + escapeHtml([year, network].filter(Boolean).join(', ')) + '</p></div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  return html;
+}
+
+function bindSearchResultClicks() {
+  state.addFlow.results.forEach(function (r) {
+    var node = document.querySelector('.search-result[data-id="' + r.show.id + '"]');
+    if (node) node.onclick = function () { state.addFlow.selected = r.show; render(); };
+  });
+}
+
+// Updates only the results list below the search input, leaving the input
+// element itself untouched. Replacing the whole screen (including the input)
+// on every keystroke's results caused iOS Safari to drop focus and dismiss
+// the keyboard mid-typing; this keeps the same input DOM node alive.
+function updateSearchResults() {
+  var container = document.getElementById('search-results-container');
+  if (!container) return;
+  container.innerHTML = searchResultsHtml();
+  bindSearchResultClicks();
+}
+
+function renderAdd() {
+  var af = state.addFlow;
+  var html = '';
+  html += '<div class="top-bar"><button class="icon-btn" id="close-btn" aria-label="Close">&times;</button><h1 style="margin:0;">Add show</h1><span></span></div>';
+
+  html += '<p class="field-label">Search</p>';
+  html += '<input type="text" id="search-input" placeholder="Show title" value="' + escapeHtml(af.query) + '" />';
+  html += '<div id="search-results-container">' + searchResultsHtml() + '</div>';
+
+  if (af.selected) {
+    html += '<div class="field" style="margin-top:16px;">';
+    html += '<p class="field-label">Watching on</p>';
+    html += '<input type="text" id="platform-input" placeholder="Hulu" value="' + escapeHtml(af.platform) + '" />';
+    html += '</div>';
+
+    html += '<p class="field-label">Last episode watched</p>';
+    html += '<div class="field-row">';
+    html += '<div class="field"><p class="hint" style="margin:0 0 4px;">Season</p><input type="number" id="season-input" min="0" value="' + escapeHtml(af.season) + '" /></div>';
+    html += '<div class="field"><p class="hint" style="margin:0 0 4px;">Episode</p><input type="number" id="episode-input" min="0" value="' + escapeHtml(af.episode) + '" /></div>';
+    html += '</div>';
+    html += '<p class="hint" style="margin-bottom:16px;">Leave blank if you have not started.</p>';
+
+    if (af.error) html += '<p class="error-text">' + escapeHtml(af.error) + '</p>';
+
+    html += '<button class="primary" id="submit-add-btn">Add show</button>';
+  }
+
+  root.innerHTML = html;
+
+  document.getElementById('close-btn').onclick = function () { state.view = 'list'; render(); };
+
+  var searchInput = document.getElementById('search-input');
+  var searchTimer = null;
+  searchInput.oninput = function (e) {
+    af.query = e.target.value;
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      if (af.query.trim().length < 2) {
+        af.results = [];
+        af.searchStatus = 'idle';
+        updateSearchResults();
+        return;
+      }
+      searchShows(af.query).then(function (results) {
+        af.results = results.slice(0, 8);
+        af.searchStatus = af.results.length === 0 ? 'empty' : 'results';
+        updateSearchResults();
+      }).catch(function (err) {
+        af.results = [];
+        af.searchStatus = 'error';
+        af.searchError = (err && err.message) ? err.message : String(err);
+        updateSearchResults();
+      });
+    }, 350);
+  };
+
+  bindSearchResultClicks();
+
+  if (af.selected) {
+    document.getElementById('platform-input').oninput = function (e) { af.platform = e.target.value; };
+    document.getElementById('season-input').oninput = function (e) { af.season = e.target.value; };
+    document.getElementById('episode-input').oninput = function (e) { af.episode = e.target.value; };
+    document.getElementById('submit-add-btn').onclick = submitAddShow;
+  }
+}
+
+function submitAddShow() {
+  var af = state.addFlow;
+  af.error = '';
+
+  var already = state.library.some(function (i) { return i.showId === af.selected.id; });
+  if (already) {
+    af.error = 'That show is already in your library.';
+    render();
+    return;
+  }
+
+  var hasSeason = af.season !== '' && af.season != null;
+  var hasEpisode = af.episode !== '' && af.episode != null;
+  if (hasSeason !== hasEpisode) {
+    af.error = 'Enter both season and episode, or leave both blank.';
+    render();
+    return;
+  }
+
+  var pendingSeasonNumber = null;
+  if (hasSeason && hasEpisode) {
+    pendingSeasonNumber = { season: parseInt(af.season, 10), number: parseInt(af.episode, 10) };
+  }
+
+  var newItem = {
+    showId: af.selected.id,
+    platform: af.platform.trim(),
+    watchedEpisodeId: null,
+    pendingSeasonNumber: pendingSeasonNumber
+  };
+
+  state.library.push(newItem);
+  saveLibrary(state.library);
+  state.view = 'list';
+  refreshComputedFor([newItem]).then(render);
+  render(); // optimistic render while episode data loads
+}
+
+// ---------------------------------------------------------------------
+// Actions
+// ---------------------------------------------------------------------
+
+function markWatched(showId, fromDetail) {
+  var item = state.library.find(function (i) { return i.showId === showId; });
+  var c = state.computed[showId];
+  if (!item || !c || !c.status.nextEpisode) return;
+
+  item.watchedEpisodeId = c.status.nextEpisode.id;
+  saveLibrary(state.library);
+
+  c.status = computeShowStatus(c.show, c.episodes, item.watchedEpisodeId);
+
+  if (fromDetail) {
+    if (c.status.nextEpisode) {
+      render(); // stay on detail, now showing the following episode
+    } else {
+      state.view = 'list';
+      render();
+    }
+  } else {
+    render();
+  }
+}
+
+function removeShow(showId) {
+  state.library = state.library.filter(function (i) { return i.showId !== showId; });
+  delete state.computed[showId];
+  saveLibrary(state.library);
+  state.view = 'list';
+  render();
+}
+
+// ---------------------------------------------------------------------
+// Data refresh
+// ---------------------------------------------------------------------
+
+function refreshComputedFor(items) {
+  var promises = items.map(function (item) {
+    return fetchShowWithEpisodes(item.showId).then(function (show) {
+      var episodes = sortedEpisodes(show._embedded && show._embedded.episodes ? show._embedded.episodes : []);
+
+      if (item.pendingSeasonNumber) {
+        var resolvedId = findEpisodeIdBySeasonNumber(episodes, item.pendingSeasonNumber.season, item.pendingSeasonNumber.number);
+        if (resolvedId == null) {
+          state.errorBanner = 'Could not find season ' + item.pendingSeasonNumber.season + ' episode ' + item.pendingSeasonNumber.number + ' for ' + show.name + '. Starting from the beginning.';
+        }
+        item.watchedEpisodeId = resolvedId;
+        delete item.pendingSeasonNumber;
+        saveLibrary(state.library);
+      }
+
+      var status = computeShowStatus(show, episodes, item.watchedEpisodeId);
+      state.computed[item.showId] = { show: show, episodes: episodes, status: status };
+    }).catch(function () {
+      state.errorBanner = 'Could not load data for one or more shows.';
+    });
+  });
+  return Promise.all(promises);
+}
+
+// ---------------------------------------------------------------------
+// Init
+// ---------------------------------------------------------------------
+
+function init() {
+  loadLibrary().then(function (library) {
+    state.library = library;
+    if (library.length === 0) {
+      state.view = 'list';
+      render();
+      return;
+    }
+    return refreshComputedFor(library).then(function () {
+      state.view = 'list';
+      render();
+    });
+  });
+}
+
+init();
+</script>
+</body>
+</html>
