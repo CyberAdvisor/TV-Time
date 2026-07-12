@@ -29,7 +29,7 @@ A single self-contained `index.html` file — plain HTML, CSS, and JavaScript. N
 
 - **No automatic backup or sync.** There is no account and no server storing anything.
 - **iOS can clear it unexpectedly.** For apps added to the home screen, iOS does not guarantee `localStorage` persists indefinitely — it can be cleared under storage pressure, after a restart, or after a period of inactivity. This is a platform limitation, not something the app can prevent.
-- **Manual backup/restore is built in** for exactly this reason: tap the ↻ icon on the main screen to get a copy of your data (copy it to Notes or anywhere else you like), and paste it back in later to restore your list if it ever disappears.
+- **Manual backup/restore is built in** for exactly this reason: tap the ↻ icon on the main screen to download a backup file, and restore from it later if your list ever disappears.
 - **No sharing between devices.** Adding a show on your phone doesn't make it appear on your laptop. Each browser/device has its own separate list, though you can move a backup code between devices manually.
 - **Nothing is sent anywhere except TVmaze.** The only network requests this app makes are to `api.tvmaze.com`. Your watch list itself never leaves your device unless you manually copy/paste a backup code somewhere.
 - **The code being public does not expose your data** — see the hosting note below.
@@ -38,15 +38,15 @@ A single self-contained `index.html` file — plain HTML, CSS, and JavaScript. N
 
 Tap the ↻ icon on the main screen (next to the + button) to open **Backup & restore**.
 
-- **Copy backup code** — copies your entire list (every show, its platform, and your watched progress) as a block of text. Save it somewhere you can get back to — Notes, an email to yourself, wherever.
-- **Restore from a backup code** — paste a previously copied backup code into the box and tap **Restore**. This replaces whatever's currently on the device with the contents of the backup code, so use it when your list has disappeared or you're setting up a new device.
+- **Download backup file** — saves a `.json` file with your entire list (every show, its platform, and your watched progress). On iPhone, tapping this opens Safari's file preview screen rather than saving directly — this is a standard iOS restriction that applies to any website, not something specific to this app. From that screen: tap **More...** → **Save to Files** → choose a location (On My iPhone, or an iCloud Drive folder if you want it to sync across devices) → **Save**.
+- **Choose backup file** — pick a previously saved backup file to restore it. This replaces whatever's currently on the device with the contents of that file, so use it when your list has disappeared or you're setting up a new device.
 
 A few things worth knowing:
 
-- The backup code is plain text — you can move it between devices any way you'd move text (Notes with iCloud sync, Messages, email, AirDrop), and it works the same whether you're going Mac → iPhone, iPhone → iPhone, or any other combination.
-- There's nothing device-specific baked into it, so restoring on a different device or a different hosted copy of the app works identically to restoring on the same one.
-- Restoring is a full replace, not a merge — if you have shows on the device that aren't in the backup code, they'll be gone after restoring. Copy a fresh backup code first if you want to keep both.
-- This is a manual step, not automatic — the app doesn't back itself up on a schedule, so it's worth copying a fresh code occasionally, especially before an iOS update or if you haven't opened the app in a while (see the storage note above on why).
+- The file has nothing device-specific baked into it, so restoring on a different device or a different hosted copy of the app works identically to restoring on the same one.
+- To move a backup between devices, use whatever you'd normally use to move a file — AirDrop, iCloud Drive, email, Messages.
+- Restoring is a full replace, not a merge — if you have shows on the device that aren't in the backup file, they'll be gone after restoring. Download a fresh backup first if you want to keep both.
+- This is a manual step, not automatic — the app doesn't back itself up on a schedule, so it's worth downloading a fresh backup occasionally, especially before an iOS update or if you haven't opened the app in a while (see the storage note above on why).
 
 ## Hosting your own copy on GitHub Pages
 
