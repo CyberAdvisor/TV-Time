@@ -299,68 +299,96 @@ async function testSearchErrorVisibility() {
   console.log('testSearchErrorVisibility passed.');
 }
 
-async function testBackupAndRestore() {
+async function testBackupDownload() {
+  const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
+  const { window } = dom;
+  freezeDate(window, '2026-07-12T12:00:00');
+  window.fetch = (url) => mockFetch(url);
+
+  // jsdom doesn't implement createObjectURL by default; provide a minimal
+  // mock and capture what gets passed to it and to the anchor's click().
+  let capturedBlob = null;
+  window.URL.createObjectURL = (blob) => { capturedBlob = blob; return 'blob:mock-url'; };
+  window.URL.revokeObjectURL = () => {};
+  const originalClick = window.HTMLAnchorElement.prototype.click;
+  let clickedAnchor = null;
+  window.HTMLAnchorElement.prototype.click = function () { clickedAnchor = this; };
+
+  window.localStorage.setItem('my-shows-library-v1', JSON.stringify([{ showId: 501, platform: 'Hulu', watchedEpisodeId: 1002, pendingSeasonNumber: null }]));
+
+  const scriptBody = html.match(/<script>([\s\S]*)<\/script>/)[1];
+  window.eval(scriptBody);
+  await wait(50);
+
+  window.document.getElementById('backup-btn').click();
+  await wait(10);
+  assert.strictEqual(window.state.view, 'backup', 'backup button navigates to backup view');
+
+  window.document.getElementById('download-backup-btn').click();
+
+  assert.ok(clickedAnchor, 'clicking Download backup file triggers a file download');
+  assert.match(clickedAnchor.download, /^my-shows-backup-\d{4}-\d{2}-\d{2}\.json$/, 'downloaded file has a dated filename');
+  assert.ok(capturedBlob, 'a Blob was created for the download');
+  assert.strictEqual(capturedBlob.type, 'application/json', 'backup file is JSON');
+
+  const text = await capturedBlob.text();
+  const parsed = JSON.parse(text);
+  assert.strictEqual(parsed.length, 1);
+  assert.strictEqual(parsed[0].showId, 501, 'downloaded backup file contains the current library data');
+
+  window.HTMLAnchorElement.prototype.click = originalClick;
+  console.log('testBackupDownload passed.');
+}
+
+async function testBackupRestoreFromFile() {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
   const { window } = dom;
   freezeDate(window, '2026-07-12T12:00:00');
   const storageBackend = window.localStorage;
   window.fetch = (url) => mockFetch(url);
 
-  storageBackend.setItem('my-shows-library-v1', JSON.stringify([
-    { showId: 501, platform: 'Hulu', watchedEpisodeId: 1002, pendingSeasonNumber: null }
-  ]));
+  window.localStorage.setItem('my-shows-library-v1', JSON.stringify([{ showId: 501, platform: 'Hulu', watchedEpisodeId: 1002, pendingSeasonNumber: null }]));
 
   const scriptBody = html.match(/<script>([\s\S]*)<\/script>/)[1];
   window.eval(scriptBody);
   await wait(50);
 
-  // --- Open backup view, verify the backup code reflects current data ---
   window.document.getElementById('backup-btn').click();
   await wait(10);
-  assert.strictEqual(window.state.view, 'backup', 'backup button navigates to backup view');
 
-  const backupOutput = window.document.getElementById('backup-output');
-  const backupCode = JSON.parse(backupOutput.value);
-  assert.strictEqual(backupCode.length, 1);
-  assert.strictEqual(backupCode[0].showId, 501, 'backup code contains the current library data');
+  const fileInput = window.document.getElementById('restore-file-input');
 
-  // --- Restore: invalid JSON is rejected with a clear error ---
-  const restoreInput = window.document.getElementById('restore-input');
-  restoreInput.value = 'not valid json{{{';
-  restoreInput.oninput({ target: restoreInput });
-  window.document.getElementById('restore-btn').click();
-  await wait(10);
+  // --- Invalid JSON file is rejected with a clear error, not a crash ---
+  let badFile = new window.File(['not valid json{{{'], 'backup.json', { type: 'application/json' });
+  fileInput.onchange({ target: { files: [badFile] } });
+  await wait(20);
   let errorText = window.document.querySelector('.error-text');
-  assert.ok(errorText, 'invalid JSON shows an error instead of crashing');
+  assert.ok(errorText, 'a malformed JSON file shows an error instead of crashing');
 
-  // --- Restore: valid-JSON-but-wrong-shape is also rejected ---
-  const restoreInput2 = window.document.getElementById('restore-input');
-  restoreInput2.value = JSON.stringify({ notAShowsList: true });
-  restoreInput2.oninput({ target: restoreInput2 });
-  window.document.getElementById('restore-btn').click();
-  await wait(10);
+  // --- Valid JSON but wrong shape is also rejected ---
+  let wrongShapeFile = new window.File([JSON.stringify({ notAShowsList: true })], 'backup.json', { type: 'application/json' });
+  fileInput.onchange({ target: { files: [wrongShapeFile] } });
+  await wait(20);
   errorText = window.document.querySelector('.error-text');
-  assert.ok(errorText, 'wrong-shaped JSON is rejected as an invalid backup code');
+  assert.ok(errorText, 'wrong-shaped JSON is rejected as an invalid backup file');
 
-  // --- Restore: a valid backup code replaces the library and persists ---
+  // --- A valid backup file replaces the library and persists ---
   const validBackup = JSON.stringify([
     { showId: 251, platform: 'Peacock', watchedEpisodeId: 20865, pendingSeasonNumber: null }
   ]);
-  const restoreInput3 = window.document.getElementById('restore-input');
-  restoreInput3.value = validBackup;
-  restoreInput3.oninput({ target: restoreInput3 });
-  window.document.getElementById('restore-btn').click();
+  let goodFile = new window.File([validBackup], 'backup.json', { type: 'application/json' });
+  fileInput.onchange({ target: { files: [goodFile] } });
   await wait(50);
 
   assert.strictEqual(window.state.view, 'list', 'after a successful restore, returns to the list view');
   const persisted = JSON.parse(storageBackend.getItem('my-shows-library-v1'));
   assert.strictEqual(persisted.length, 1);
-  assert.strictEqual(persisted[0].showId, 251, 'restored data replaces the old library and persists to storage');
+  assert.strictEqual(persisted[0].showId, 251, 'restored data from the file replaces the old library and persists to storage');
 
   const rowTitle = window.document.querySelector('.row-title');
   assert.ok(rowTitle.innerHTML.includes('Downton Abbey'), 'restored show appears correctly in the list after restore');
 
-  console.log('testBackupAndRestore passed.');
+  console.log('testBackupRestoreFromFile passed.');
 }
 
 (async () => {
@@ -370,7 +398,8 @@ async function testBackupAndRestore() {
     await testLegacyDataMigration();
     await testSearchInputStaysStableWhileTyping();
     await testSearchErrorVisibility();
-    await testBackupAndRestore();
+    await testBackupDownload();
+    await testBackupRestoreFromFile();
     console.log('All app integration tests passed.');
   } catch (err) {
     console.error('TEST FAILED:', err);
