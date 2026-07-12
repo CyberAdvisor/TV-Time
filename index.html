@@ -591,92 +591,89 @@ function formatDate(airdate) {
 // ---------------------------------------------------------------------
 
 function openBackupFlow() {
-  state.backupFlow = { restoreInput: '', restoreError: '', restoreSuccess: false, copied: false };
   state.view = 'backup';
   render();
 }
 
-function renderBackup() {
-  var bf = state.backupFlow;
-  var backupCode = JSON.stringify(state.library);
+// Validates that parsed JSON looks like a library array (used by both file
+// restore and any other restore path, so validation logic lives in one place).
+function isValidLibraryData(parsed) {
+  if (!Array.isArray(parsed)) return false;
+  return parsed.every(function (item) { return item && typeof item.showId === 'number'; });
+}
 
+function downloadBackupFile() {
+  var data = JSON.stringify(state.library, null, 2);
+  var blob = new Blob([data], { type: 'application/json' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'my-shows-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+}
+
+function applyRestoredLibrary(parsed) {
+  state.library = parsed;
+  state.computed = {};
+  saveLibrary(state.library);
+  refreshComputedFor(state.library).then(function () {
+    state.view = 'list';
+    render();
+  });
+}
+
+function handleRestoreFile(file) {
+  var statusEl = document.getElementById('restore-status');
+  var reader = new FileReader();
+  reader.onload = function () {
+    var parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (e) {
+      statusEl.innerHTML = '<p class="error-text">That file does not look like a valid backup.</p>';
+      return;
+    }
+    if (!isValidLibraryData(parsed)) {
+      statusEl.innerHTML = '<p class="error-text">That file does not look like a valid backup.</p>';
+      return;
+    }
+    statusEl.innerHTML = '';
+    applyRestoredLibrary(parsed);
+  };
+  reader.onerror = function () {
+    statusEl.innerHTML = '<p class="error-text">Could not read that file.</p>';
+  };
+  reader.readAsText(file);
+}
+
+function renderBackup() {
   var html = '';
   html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button><h1 style="margin:0;">Backup &amp; restore</h1><span></span></div>';
 
-  html += '<p class="field-label">Your backup code</p>';
-  html += '<p class="hint" style="margin-bottom:8px;">Copy this and save it somewhere (like Notes). If your list ever disappears, paste it back in below to restore it.</p>';
-  html += '<textarea id="backup-output" readonly rows="4" style="width:100%;font-family:ui-monospace,monospace;font-size:12px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);">' + escapeHtml(backupCode) + '</textarea>';
-  html += '<button id="copy-backup-btn" style="margin-top:8px;width:100%;">' + (bf.copied ? 'Copied' : 'Copy backup code') + '</button>';
+  html += '<p class="field-label">Backup</p>';
+  html += '<p class="hint" style="margin-bottom:8px;">Save a backup file to this device (e.g. to Files, or iCloud Drive if you want it to sync). If your list ever disappears, restore it from that file below.</p>';
+  html += '<button id="download-backup-btn" style="width:100%;">Download backup file</button>';
 
-  html += '<p class="field-label" style="margin-top:28px;">Restore from a backup code</p>';
-  html += '<textarea id="restore-input" rows="4" placeholder="Paste your backup code here" style="width:100%;font-family:ui-monospace,monospace;font-size:12px;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);">' + escapeHtml(bf.restoreInput) + '</textarea>';
-  if (bf.restoreError) html += '<p class="error-text">' + escapeHtml(bf.restoreError) + '</p>';
-  if (bf.restoreSuccess) html += '<p class="hint" style="color:var(--accent);">Restored successfully.</p>';
-  html += '<button class="primary" id="restore-btn" style="margin-top:8px;">Restore</button>';
-  html += '<p class="hint" style="margin-top:8px;">This replaces your current list on this device with the one in the backup code.</p>';
+  html += '<p class="field-label" style="margin-top:28px;">Restore</p>';
+  html += '<p class="hint" style="margin-bottom:8px;">Pick a previously saved backup file.</p>';
+  html += '<input type="file" id="restore-file-input" accept="application/json,.json" style="display:none;" />';
+  html += '<button id="restore-file-btn" style="width:100%;">Choose backup file</button>';
+  html += '<div id="restore-status"></div>';
+  html += '<p class="hint" style="margin-top:8px;">Restoring replaces your current list on this device with the one in the file.</p>';
 
   root.innerHTML = html;
 
   document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
-
-  document.getElementById('copy-backup-btn').onclick = function () {
-    var output = document.getElementById('backup-output');
-    output.select();
-    var copySucceeded = false;
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(backupCode);
-        copySucceeded = true;
-      } else if (document.execCommand) {
-        copySucceeded = document.execCommand('copy');
-      }
-    } catch (e) {
-      copySucceeded = false;
-    }
-    bf.copied = copySucceeded;
-    render();
-    if (!copySucceeded) {
-      // Clipboard access can be blocked in some contexts; the text is still
-      // selected, so the user can copy manually.
-    }
+  document.getElementById('download-backup-btn').onclick = downloadBackupFile;
+  document.getElementById('restore-file-btn').onclick = function () {
+    document.getElementById('restore-file-input').click();
   };
-
-  document.getElementById('restore-input').oninput = function (e) { bf.restoreInput = e.target.value; };
-
-  document.getElementById('restore-btn').onclick = function () {
-    bf.restoreError = '';
-    bf.restoreSuccess = false;
-    var parsed;
-    try {
-      parsed = JSON.parse(bf.restoreInput);
-    } catch (e) {
-      bf.restoreError = 'That does not look like a valid backup code.';
-      render();
-      return;
-    }
-    if (!Array.isArray(parsed)) {
-      bf.restoreError = 'That does not look like a valid backup code.';
-      render();
-      return;
-    }
-    var isValid = parsed.every(function (item) {
-      return item && typeof item.showId === 'number';
-    });
-    if (!isValid) {
-      bf.restoreError = 'That does not look like a valid backup code.';
-      render();
-      return;
-    }
-
-    state.library = parsed;
-    state.computed = {};
-    saveLibrary(state.library);
-    bf.restoreSuccess = true;
-    render();
-    refreshComputedFor(state.library).then(function () {
-      state.view = 'list';
-      render();
-    });
+  document.getElementById('restore-file-input').onchange = function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (file) handleRestoreFile(file);
   };
 }
 
