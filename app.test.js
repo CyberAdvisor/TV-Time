@@ -13,7 +13,7 @@ const mockShowInfo = {
 const mockShowEpisodes = [
   { id: 1001, season: 4, number: 1, name: 'Ready', airdate: '2026-06-11', runtime: 30, summary: '<p>Season opener.</p>' },
   { id: 1002, season: 4, number: 2, name: 'Sundae', airdate: '2026-06-18', runtime: 31, summary: '<p>Ep 2.</p>' },
-  { id: 1003, season: 4, number: 3, name: 'Doors', airdate: '2026-06-25', runtime: 32, summary: '<p>Ep 3.</p>' },
+  { id: 1003, season: 4, number: 3, name: 'Doors', airdate: '2026-06-25', runtime: 32, summary: '<p>Ep 3.</p>', image: { medium: 'https://example.com/s4e3-medium.jpg', original: 'https://example.com/s4e3-original.jpg' } },
   { id: 1004, season: 4, number: 4, name: 'Future', airdate: '2026-08-20', runtime: 30, summary: '<p>Ep 4.</p>' }
 ];
 
@@ -126,10 +126,16 @@ async function testMainFlow() {
   const synopsis = window.document.querySelector('.synopsis');
   assert.ok(synopsis.textContent.includes('Ep 3'), 'HTML stripped from synopsis and shown correctly');
 
+  const episodeImage = window.document.querySelector('.episode-image');
+  assert.ok(episodeImage, 'episode still image renders when TVmaze provides one');
+  assert.strictEqual(episodeImage.getAttribute('src'), 'https://example.com/s4e3-medium.jpg', 'episode image uses the medium-size TVmaze image URL');
+
   window.document.getElementById('mark-watched-btn').click();
   await wait(10);
   let subLine = window.document.querySelector('.row-sub');
   assert.ok(subLine.textContent.includes('S04E04'), 'after marking watched, detail advances to next episode S4E4');
+
+  assert.ok(!window.document.querySelector('.episode-image'), 'no broken image element renders when an episode (S4E4) has no TVmaze image');
 
   const detailTable = window.document.querySelector('.detail-table');
   assert.ok(detailTable.textContent.includes('Aug 20, 2026'), 'air date formatted correctly for future episode');

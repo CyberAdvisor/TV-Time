@@ -193,6 +193,16 @@
   .detail-table td:first-child { color: var(--text-secondary); }
   .detail-table td:last-child { text-align: right; }
   .synopsis { font-size: 14px; line-height: 1.6; margin: 0 0 20px; }
+  .episode-image {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+    display: block;
+    background: var(--surface);
+  }
   .error-text { color: var(--danger); font-size: 13px; margin: 6px 0 0; }
   .loading { text-align: center; color: var(--text-secondary); padding: 40px; font-size: 14px; }
   .remove-link { color: var(--danger); font-size: 13px; }
@@ -517,6 +527,11 @@ function renderDetail() {
 
   var html = '';
   html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button></div>';
+
+  if (ep && ep.image && ep.image.medium) {
+    html += '<img class="episode-image" src="' + escapeHtml(ep.image.medium) + '" alt="" />';
+  }
+
   html += '<h1 style="margin-bottom:2px;">' + escapeHtml(c.show.name) + '</h1>';
 
   if (ep) {
