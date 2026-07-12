@@ -69,4 +69,3 @@ This app was originally built with [Claude](https://claude.ai). To make changes 
 - No login, no cloud sync, no cross-device support
 - No notifications when a new episode airs — you have to open the app to check
 - Relies entirely on TVmaze's data — if a show isn't in their database, or their episode/special data has gaps, that carries through to the app
-- No built-in backup or export of your list
