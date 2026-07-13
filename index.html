@@ -286,6 +286,11 @@ function sortWithinGroup(entries, group) {
       return a.show.name.localeCompare(b.show.name);
     });
   }
+  if (group === 'available') {
+    return entries.slice().sort(function (a, b) {
+      return (a.availableOrder || 0) - (b.availableOrder || 0);
+    });
+  }
   return entries;
 }
 
@@ -294,10 +299,23 @@ function groupShows(showsWithStatus) {
   for (var i = 0; i < showsWithStatus.length; i++) {
     groups[showsWithStatus[i].status.group].push(showsWithStatus[i]);
   }
+  groups.available = sortWithinGroup(groups.available, 'available');
   groups.upcoming = sortWithinGroup(groups.upcoming, 'upcoming');
   groups.pending = sortWithinGroup(groups.pending, 'pending');
   groups.completed = sortWithinGroup(groups.completed, 'completed');
   return groups;
+}
+
+// Given all library items, the value to assign an item being placed at the
+// TOP of the available group (above everything currently there), or the
+// BOTTOM (below everything currently there).
+function nextTopAvailableOrder(items) {
+  var values = items.map(function (i) { return i.availableOrder || 0; }).concat([0]);
+  return Math.min.apply(null, values) - 1;
+}
+function nextBottomAvailableOrder(items) {
+  var values = items.map(function (i) { return i.availableOrder || 0; }).concat([0]);
+  return Math.max.apply(null, values) + 1;
 }
 
 function formatCountdown(daysUntil, airdate) {
@@ -416,11 +434,11 @@ function el(html) {
 function renderList() {
   var entries = state.library.map(function (item) {
     var c = state.computed[item.showId];
-    return c ? { item: item, show: c.show, status: c.status } : null;
+    return c ? { item: item, show: c.show, status: c.status, availableOrder: item.availableOrder || 0 } : null;
   }).filter(Boolean);
 
   var groups = groupShows(entries.map(function (e) {
-    return { item: e.item, show: e.show, status: e.status };
+    return { item: e.item, show: e.show, status: e.status, availableOrder: e.availableOrder };
   }));
 
   var html = '';
@@ -828,7 +846,7 @@ function submitAddShow() {
   state.library.push(newItem);
   saveLibrary(state.library);
   state.view = 'list';
-  refreshComputedFor([newItem]).then(render);
+  refreshComputedFor([newItem], { isNewAddition: true }).then(render);
   render(); // optimistic render while episode data loads
 }
 
@@ -842,9 +860,15 @@ function markWatched(showId, fromDetail) {
   if (!item || !c || !c.status.nextEpisode) return;
 
   item.watchedEpisodeId = c.status.nextEpisode.id;
-  saveLibrary(state.library);
-
   c.status = computeShowStatus(c.show, c.episodes, item.watchedEpisodeId);
+
+  // If the show is still "available now" (the next-next episode has also
+  // already aired), send it to the bottom of that group rather than letting
+  // it sit at the top indefinitely while other shows wait behind it.
+  if (c.status.group === 'available') {
+    item.availableOrder = nextBottomAvailableOrder(state.library);
+  }
+  saveLibrary(state.library);
 
   if (fromDetail) {
     if (c.status.nextEpisode) {
@@ -870,7 +894,8 @@ function removeShow(showId) {
 // Data refresh
 // ---------------------------------------------------------------------
 
-function refreshComputedFor(items) {
+function refreshComputedFor(items, options) {
+  var isNewAddition = options && options.isNewAddition;
   var promises = items.map(function (item) {
     return fetchShowWithEpisodes(item.showId).then(function (show) {
       var episodes = sortedEpisodes(show._embedded && show._embedded.episodes ? show._embedded.episodes : []);
@@ -886,6 +911,12 @@ function refreshComputedFor(items) {
       }
 
       var status = computeShowStatus(show, episodes, item.watchedEpisodeId);
+
+      if (isNewAddition && status.group === 'available') {
+        item.availableOrder = nextTopAvailableOrder(state.library);
+        saveLibrary(state.library);
+      }
+
       state.computed[item.showId] = { show: show, episodes: episodes, status: status };
     }).catch(function () {
       state.errorBanner = 'Could not load data for one or more shows.';

@@ -15,7 +15,8 @@ Each library item (persisted to `localStorage` under the key `my-shows-library-v
   showId: 251,              // TVmaze show id
   platform: "Hulu",         // free-text, user-entered
   watchedEpisodeId: 20865,  // TVmaze's unique episode id, or null if nothing watched yet
-  pendingSeasonNumber: { season: 2, number: 8 }  // transient; see below
+  pendingSeasonNumber: { season: 2, number: 8 },  // transient; see below
+  availableOrder: 0          // recency marker for sort position within "Available now"; see below
 }
 ```
 
@@ -44,6 +45,33 @@ Plain `localStorage`, not any Claude/Artifact storage API — this file is meant
 ## UI/rendering note: don't rebuild the search input while the user is typing
 
 The add-show search input is deliberately kept in a stable DOM container (`#search-results-container` is updated separately from the `<input>` itself — see `updateSearchResults()` vs `renderAdd()`). Rebuilding/replacing the `<input>` element on every keystroke's search results caused iOS Safari to drop keyboard focus mid-typing. If you touch the add-show screen, preserve this separation — don't collapse it back into one `root.innerHTML = ...` render on every `oninput`.
+
+## Available-group ordering
+
+Within "Available now" specifically, shows are NOT in insertion order or alphabetical — they're ordered by `availableOrder` (lower = higher up), a recency marker the app sets on two specific events:
+
+- **Adding a show** that lands directly in "available": moves to the TOP (`nextTopAvailableOrder` in `logic.js`, called from `refreshComputedFor` when passed `{ isNewAddition: true }` — see the call in `submitAddShow`).
+- **Marking a show watched** and it's STILL "available" afterward (the next-next episode has also already aired): moves to the BOTTOM (`nextBottomAvailableOrder`, called from `markWatched`).
+
+Untouched shows default to `availableOrder: 0` (no migration needed — `item.availableOrder || 0` handles old data missing the field). Top/bottom placement works by scanning all `availableOrder` values in the library and going one below the min / one above the max, not by a fixed increment — see `nextTopAvailableOrder`/`nextBottomAvailableOrder` in `logic.js`, tested in `logic.test.js`, and exercised end-to-end in `app.test.js` (`testAvailableGroupOrdering`).
+
+Upcoming still sorts by soonest air date; pending/completed still sort alphabetically (by `show.name`) — only "available" uses this recency-based order. All three sort behaviors live in `sortWithinGroup` in `logic.js`, mirrored manually in `index.html` (no build step to share the module directly with the browser — keep both copies in sync by hand when editing).
+
+## Backup and restore
+
+There's a manual backup/restore feature (↻ icon on the list screen) because iOS does not guarantee `localStorage` survives for home-screen web apps — it can be cleared under storage pressure, after restarts, or after inactivity. This is a real platform limitation, not something fixable in-app.
+
+- **Download**: builds a `Blob` of `JSON.stringify(state.library)` and triggers it via a temporary `<a download>` click (`downloadBackupFile`). On iOS Safari this opens a Quick Look preview screen rather than saving directly — that's expected iOS behavior for any website's downloads, not a bug; the user taps More... → Save to Files from there.
+- **Restore**: a hidden `<input type="file">` triggered by a visible button; reads the picked file via `FileReader`, validates it's an array of objects each with a numeric `showId` (`isValidLibraryData`), and on success fully replaces `state.library` (not a merge) via `applyRestoredLibrary`.
+- Tested in `app.test.js` (`testBackupDownload`, `testBackupRestoreFromFile`), including invalid-JSON and wrong-shape rejection.
+
+## Episode images
+
+The detail screen shows a 16:9 episode still (`.episode-image`) when TVmaze provides one (`episode.image.medium`), rendered above the title. Not every episode has one — when absent, nothing renders in that spot (no broken-image icon). Deliberately NOT shown on the list screen (not enough room there, per explicit instruction). Tested in `app.test.js` for both the present and absent cases.
+
+## Search error visibility
+
+An earlier version silently swallowed search failures (empty results, no explanation) — this was itself a bug that made a real iOS network issue (`Load failed`, likely file:// origin restrictions before GitHub Pages hosting was set up) look like "nothing happens." `af.searchStatus` now tracks `idle` / `results` / `empty` / `error` explicitly, and a real fetch failure shows the actual underlying error message rather than nothing. If you touch the search flow, don't regress back to a bare `.catch(() => {})`.
 
 ## Testing
 

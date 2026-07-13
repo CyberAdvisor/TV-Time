@@ -1,7 +1,8 @@
 const assert = require('assert');
 const {
   sortedEpisodes, findWatchedIndex, findEpisodeIdBySeasonNumber,
-  computeShowStatus, groupShows, formatCountdown, isSpecial, formatEpisodeCode
+  computeShowStatus, groupShows, formatCountdown, isSpecial, formatEpisodeCode,
+  nextTopAvailableOrder, nextBottomAvailableOrder
 } = require('./logic');
 
 const TODAY = '2026-07-12';
@@ -166,7 +167,33 @@ const TODAY = '2026-07-12';
   assert.strictEqual(groups.pending.length, 1);
 }
 
-// --- groupShows: pending and completed sort alphabetically by show name ---
+// --- groupShows: available group sorts by availableOrder (recency marker) ---
+{
+  const entries = [
+    { show: { name: 'Old' }, status: { group: 'available', nextEpisode: {} }, availableOrder: 0 },
+    { show: { name: 'JustAdded' }, status: { group: 'available', nextEpisode: {} }, availableOrder: -1 },
+    { show: { name: 'JustMarkedWatched' }, status: { group: 'available', nextEpisode: {} }, availableOrder: 1 }
+  ];
+  const groups = groupShows(entries);
+  assert.deepStrictEqual(
+    groups.available.map(e => e.show.name),
+    ['JustAdded', 'Old', 'JustMarkedWatched'],
+    'newly-added (negative order) sorts to top, untouched (0) in the middle, just-marked-watched (positive) sorts to bottom'
+  );
+}
+
+// --- nextTopAvailableOrder / nextBottomAvailableOrder ---
+{
+  assert.strictEqual(nextTopAvailableOrder([]), -1, 'first-ever top placement is -1 (above baseline 0)');
+  assert.strictEqual(nextBottomAvailableOrder([]), 1, 'first-ever bottom placement is 1 (below baseline 0)');
+
+  const items = [{ availableOrder: -1 }, { availableOrder: 0 }, { availableOrder: 3 }];
+  assert.strictEqual(nextTopAvailableOrder(items), -2, 'top placement goes below the current minimum');
+  assert.strictEqual(nextBottomAvailableOrder(items), 4, 'bottom placement goes above the current maximum');
+
+  const untouchedItems = [{}, {}]; // no availableOrder field at all (pre-existing library items)
+  assert.strictEqual(nextTopAvailableOrder(untouchedItems), -1, 'items missing availableOrder default to 0 for this calculation');
+}
 {
   const entries = [
     { show: { name: 'Zebra Show' }, status: { group: 'pending', nextEpisode: null } },

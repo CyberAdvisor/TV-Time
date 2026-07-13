@@ -33,6 +33,16 @@ const mockDowntonEpisodes = [
   { id: 20866, season: 3, number: 1, name: 'Episode 1', airdate: '2012-09-16', runtime: 90, summary: '<p>S3 opener.</p>' }
 ];
 
+// A minimal third show, used only to test available-group ordering
+// (top-on-add, bottom-on-still-available-after-mark-watched).
+const mockFreshShowInfo = {
+  id: 999, name: 'Fresh Show', status: 'Running', premiered: '2020-01-01',
+  network: { name: 'Test Network' }, image: { medium: 'https://example.com/fresh.jpg' }
+};
+const mockFreshShowEpisodes = [
+  { id: 9001, season: 1, number: 1, name: 'Pilot', airdate: '2020-01-01', runtime: 30, summary: '<p>Pilot.</p>' }
+];
+
 const mockSearchResults = [
   { score: 10, show: { id: 501, name: 'The Bear', premiered: '2022-06-23', network: { name: 'FX' }, image: { medium: 'x.jpg' } } }
 ];
@@ -52,6 +62,12 @@ function mockFetch(url) {
   }
   if (url === 'https://api.tvmaze.com/shows/251/episodes?specials=1') {
     return Promise.resolve({ ok: true, json: () => Promise.resolve(mockDowntonEpisodes) });
+  }
+  if (url === 'https://api.tvmaze.com/shows/999') {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(mockFreshShowInfo) });
+  }
+  if (url === 'https://api.tvmaze.com/shows/999/episodes?specials=1') {
+    return Promise.resolve({ ok: true, json: () => Promise.resolve(mockFreshShowEpisodes) });
   }
   return Promise.reject(new Error('unexpected fetch: ' + url));
 }
@@ -299,6 +315,57 @@ async function testSearchErrorVisibility() {
   console.log('testSearchErrorVisibility passed.');
 }
 
+async function testAvailableGroupOrdering() {
+  const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
+  const { window } = dom;
+  freezeDate(window, '2026-07-12T12:00:00');
+  const storageBackend = window.localStorage;
+  window.fetch = (url) => mockFetch(url);
+
+  // Two pre-existing shows, both already "available" (untouched, baseline order 0).
+  storageBackend.setItem('my-shows-library-v1', JSON.stringify([
+    { showId: 501, platform: '', watchedEpisodeId: null, pendingSeasonNumber: { season: 4, number: 2 } }, // next: S4E3, aired
+    { showId: 251, platform: '', watchedEpisodeId: null, pendingSeasonNumber: { season: 2, number: 7 } }  // next: S2E8, aired
+  ]));
+
+  const scriptBody = html.match(/<script>([\s\S]*)<\/script>/)[1];
+  window.eval(scriptBody);
+  await wait(50);
+
+  let rowTitles = [...window.document.querySelectorAll('.row-title')].map(el => el.textContent);
+  assert.deepStrictEqual(rowTitles, ['The Bear', 'Downton Abbey'], 'both pre-existing shows start in original order (both untouched, baseline 0)');
+
+  // --- Add a new show that lands directly in "available" -> should go to the TOP ---
+  const newItem = { showId: 999, platform: '', watchedEpisodeId: null, pendingSeasonNumber: null };
+  window.state.library.push(newItem);
+  await window.refreshComputedFor([newItem], { isNewAddition: true });
+  window.render();
+  await wait(10);
+
+  rowTitles = [...window.document.querySelectorAll('.row-title')].map(el => el.textContent);
+  assert.strictEqual(rowTitles[0], 'Fresh Show', 'newly-added show that is immediately available appears at the TOP of the available group');
+
+  const persistedAfterAdd = JSON.parse(storageBackend.getItem('my-shows-library-v1'));
+  const freshItem = persistedAfterAdd.find(i => i.showId === 999);
+  assert.ok(freshItem.availableOrder < 0, 'newly-added available show gets a negative (top) availableOrder, persisted');
+
+  // --- Mark Downton Abbey watched: next episode is "Behind the Drama", also
+  // already aired, so it stays "available" -> should move to the BOTTOM ---
+  window.document.getElementById('mark-251').click();
+  await wait(10);
+
+  rowTitles = [...window.document.querySelectorAll('.row-title')].map(el => el.textContent);
+  assert.strictEqual(rowTitles[rowTitles.length - 1], 'Downton Abbey', 'a show that stays available right after being marked watched moves to the BOTTOM');
+  assert.notStrictEqual(rowTitles[0], 'Downton Abbey', 'Downton Abbey is no longer at the top after being marked watched');
+
+  const persistedAfterMark = JSON.parse(storageBackend.getItem('my-shows-library-v1'));
+  const downtonItem = persistedAfterMark.find(i => i.showId === 251);
+  const bearItem = persistedAfterMark.find(i => i.showId === 501);
+  assert.ok(downtonItem.availableOrder > (bearItem.availableOrder || 0), 'Downton Abbey\'s availableOrder is now greater (further down) than an untouched show');
+
+  console.log('testAvailableGroupOrdering passed.');
+}
+
 async function testBackupDownload() {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
   const { window } = dom;
@@ -400,6 +467,7 @@ async function testBackupRestoreFromFile() {
     await testSearchErrorVisibility();
     await testBackupDownload();
     await testBackupRestoreFromFile();
+    await testAvailableGroupOrdering();
     console.log('All app integration tests passed.');
   } catch (err) {
     console.error('TEST FAILED:', err);

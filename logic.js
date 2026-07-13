@@ -75,14 +75,21 @@ function computeShowStatus(show, episodes, watchedEpisodeId, today) {
   return { group: 'upcoming', nextEpisode, daysUntil };
 }
 
-// Sort order within each group: available/completed order doesn't matter much,
-// but upcoming should be soonest-first.
+// Sort order within each group:
+// - upcoming: soonest air date first
+// - pending/completed: alphabetical
+// - available: by availableOrder (a recency marker set by the app when a
+//   show is added, or when it stays available right after being marked
+//   watched); lower value = higher up. Untouched shows default to 0.
 function sortWithinGroup(entries, group) {
   if (group === 'upcoming') {
     return entries.slice().sort((a, b) => a.status.nextEpisode.airdate.localeCompare(b.status.nextEpisode.airdate));
   }
   if (group === 'pending' || group === 'completed') {
     return entries.slice().sort((a, b) => a.show.name.localeCompare(b.show.name));
+  }
+  if (group === 'available') {
+    return entries.slice().sort((a, b) => (a.availableOrder || 0) - (b.availableOrder || 0));
   }
   return entries;
 }
@@ -92,6 +99,7 @@ function groupShows(showsWithStatus) {
   for (const entry of showsWithStatus) {
     groups[entry.status.group].push(entry);
   }
+  groups.available = sortWithinGroup(groups.available, 'available');
   groups.upcoming = sortWithinGroup(groups.upcoming, 'upcoming');
   groups.pending = sortWithinGroup(groups.pending, 'pending');
   groups.completed = sortWithinGroup(groups.completed, 'completed');
@@ -109,6 +117,20 @@ function formatCountdown(daysUntil, airdate) {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+// Given all library items (each with an optional availableOrder), returns
+// the value to assign an item being placed at the TOP of the available
+// group (above everything currently there).
+function nextTopAvailableOrder(items) {
+  const values = items.map(i => i.availableOrder || 0).concat([0]);
+  return Math.min(...values) - 1;
+}
+
+// Same, but for the BOTTOM of the available group.
+function nextBottomAvailableOrder(items) {
+  const values = items.map(i => i.availableOrder || 0).concat([0]);
+  return Math.max(...values) + 1;
+}
+
 module.exports = {
   sortedEpisodes,
   findWatchedIndex,
@@ -117,5 +139,7 @@ module.exports = {
   groupShows,
   formatCountdown,
   isSpecial,
-  formatEpisodeCode
+  formatEpisodeCode,
+  nextTopAvailableOrder,
+  nextBottomAvailableOrder
 };
