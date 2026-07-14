@@ -4,7 +4,7 @@ A simple TV episode tracker: keep a list of shows you're watching, mark episodes
 
 ## Why this exists
 
-Built after the TV Time app shut down. The goal was a minimal replacement that does one thing well: given a show and where you left off, tell you what episode to watch next — with no ads, no account, no social feed, and no clutter.
+Built after the TV Time app shut down. The goal was a minimal replacement that does one thing well: given a show and where you left off, tell you what episode is up next — with no ads, no account, no social feed, and no clutter.
 
 ## Screenshots
 
