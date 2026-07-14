@@ -6,6 +6,12 @@ A simple TV episode tracker: keep a list of shows you're watching, mark episodes
 
 Built after the TV Time app shut down. The goal was a minimal replacement that does one thing well: given a show and where you left off, tell you what episode to watch next — with no ads, no account, no social feed, and no clutter.
 
+## Screenshots
+
+| List view | Detail view |
+| --- | --- |
+| ![List view: My Shows, grouped into Available now and Upcoming](screenshots/list-view.png) | ![Detail view: episode info, air date, episodes left in season, seasons remaining, and synopsis](screenshots/detail-view.png) |
+
 ## What it does
 
 - **Add a show** by searching (data comes from [TVmaze](https://www.tvmaze.com), a free public TV database — no account or API key needed)
