@@ -467,7 +467,10 @@ function renderList() {
   }));
 
   var html = '';
-  html += '<div class="top-bar"><h1>My shows</h1><div style="display:flex;gap:4px;"><button class="icon-btn" id="backup-btn" aria-label="Backup and restore" style="font-size:18px;">&#8635;</button><button class="icon-btn" id="add-btn" aria-label="Add show">+</button></div></div>';
+  html += '<div class="top-bar" style="align-items:flex-start;">' +
+    '<div><h1 style="margin:12px 0 2px;">My Shows</h1><p style="font-size:13px;color:var(--text-secondary);margin:0;">A simple and private show tracker</p></div>' +
+    '<div style="display:flex;gap:4px;padding-top:14px;"><button class="icon-btn" id="backup-btn" aria-label="Backup and restore" style="font-size:18px;">&#8635;</button><button class="icon-btn" id="add-btn" aria-label="Add show">+</button></div>' +
+  '</div>';
 
   if (state.errorBanner) {
     html += '<p class="error-text">' + escapeHtml(state.errorBanner) + '</p>';
