@@ -318,6 +318,31 @@ function nextBottomAvailableOrder(items) {
   return Math.max.apply(null, values) + 1;
 }
 
+// Given a show's full sorted episode list and the "next episode to watch"
+// (as returned by computeShowStatus), returns how many episodes remain in
+// that episode's season, counting the next episode itself as one of them.
+function episodesLeftInSeason(episodes, nextEpisode) {
+  if (!nextEpisode) return 0;
+  var seasonEpisodes = episodes.filter(function (e) { return e.season === nextEpisode.season; });
+  var idx = seasonEpisodes.findIndex(function (e) { return e.id === nextEpisode.id; });
+  if (idx === -1) return 0;
+  return seasonEpisodes.length - idx;
+}
+
+// Given a show's full sorted episode list and the "next episode to watch",
+// returns { remaining, total }: how many seasons come after the current one,
+// out of how many seasons the show has in total (distinct season numbers
+// present in the episode data).
+function seasonsRemaining(episodes, nextEpisode) {
+  var seasonNumbers = [];
+  episodes.forEach(function (e) {
+    if (seasonNumbers.indexOf(e.season) === -1) seasonNumbers.push(e.season);
+  });
+  if (!nextEpisode) return { remaining: 0, total: seasonNumbers.length };
+  var remaining = seasonNumbers.filter(function (s) { return s > nextEpisode.season; }).length;
+  return { remaining: remaining, total: seasonNumbers.length };
+}
+
 function formatCountdown(daysUntil, airdate) {
   if (daysUntil === 0) return 'Today';
   if (daysUntil === 1) return 'Tomorrow';
@@ -567,6 +592,9 @@ function renderDetail() {
     html += '<tr><td>Air date</td><td>' + (ep.airdate ? formatDate(ep.airdate) : 'Unannounced') + '</td></tr>';
     if (ep.runtime) html += '<tr><td>Runtime</td><td>' + ep.runtime + ' min</td></tr>';
     html += '<tr><td>Season</td><td>' + ep.season + '</td></tr>';
+    html += '<tr><td>Episodes left in season</td><td>' + episodesLeftInSeason(c.episodes, ep) + '</td></tr>';
+    var seasonsInfo = seasonsRemaining(c.episodes, ep);
+    html += '<tr><td>Seasons remaining</td><td>' + seasonsInfo.remaining + ' of ' + seasonsInfo.total + '</td></tr>';
     html += '</table>';
 
     var summary = stripHtml(ep.summary);

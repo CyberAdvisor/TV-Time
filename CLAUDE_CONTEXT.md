@@ -73,9 +73,18 @@ The detail screen shows a 16:9 episode still (`.episode-image`) when TVmaze prov
 
 An earlier version silently swallowed search failures (empty results, no explanation) — this was itself a bug that made a real iOS network issue (`Load failed`, likely file:// origin restrictions before GitHub Pages hosting was set up) look like "nothing happens." `af.searchStatus` now tracks `idle` / `results` / `empty` / `error` explicitly, and a real fetch failure shows the actual underlying error message rather than nothing. If you touch the search flow, don't regress back to a bare `.catch(() => {})`.
 
+## Episodes left in season / seasons remaining (detail screen)
+
+The detail screen's `.detail-table` includes two rows below "Season":
+
+- **Episodes left in season** — how many episodes remain in the next-up episode's season, counting that episode itself. Computed by `episodesLeftInSeason(episodes, nextEpisode)` in `logic.js`: filters the show's full sorted episode list down to the current season, finds the next episode's position in that subset, and returns the remaining count. Specials count toward their season's total, since `sortedEpisodes` already places them within the right season by airdate.
+- **Seasons remaining** — rendered as "X of Y" (e.g. "1 of 3"): X is how many seasons come *after* the current one, Y is the total distinct season count in the show's episode data. Computed by `seasonsRemaining(episodes, nextEpisode)`, which returns `{ remaining, total }`.
+
+Both functions take the already-fetched episode list (no extra TVmaze calls) and are mirrored in `index.html`'s inline script, same as the rest of `logic.js`. Tested in `logic.test.js` (including a specials-counted-correctly case) and end-to-end in `app.test.js` (`testEpisodesLeftAndSeasonsRemainingOnDetailScreen`).
+
 ## Testing
 
-- `logic.js` — pure functions (sorting, status computation, grouping, id resolution), no DOM/fetch dependencies.
+- `logic.js` — pure functions (sorting, status computation, grouping, id resolution, remaining-episode/season counts), no DOM/fetch dependencies.
 - `logic.test.js` — plain Node unit tests for `logic.js`. Run with `node logic.test.js`.
 - `app.test.js` — integration tests that load the actual `index.html` into `jsdom`, mock `fetch`/`localStorage`, and simulate real user flows (add show, mark watched, search, error states). Run with `node app.test.js` (requires `jsdom`: `npm install jsdom`).
 

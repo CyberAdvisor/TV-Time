@@ -2,7 +2,8 @@ const assert = require('assert');
 const {
   sortedEpisodes, findWatchedIndex, findEpisodeIdBySeasonNumber,
   computeShowStatus, groupShows, formatCountdown, isSpecial, formatEpisodeCode,
-  nextTopAvailableOrder, nextBottomAvailableOrder
+  nextTopAvailableOrder, nextBottomAvailableOrder,
+  episodesLeftInSeason, seasonsRemaining
 } = require('./logic');
 
 const TODAY = '2026-07-12';
@@ -221,6 +222,53 @@ const TODAY = '2026-07-12';
   assert.strictEqual(formatCountdown(1, '2026-07-13'), 'Tomorrow');
   assert.ok(formatCountdown(3, '2026-07-15').includes('3 days'));
   assert.ok(formatCountdown(30, '2026-08-11').match(/Aug/), 'far-future dates show a calendar date, not a day count');
+}
+
+// --- episodesLeftInSeason ---
+{
+  const episodes = sortedEpisodes([
+    { id: 1, season: 2, number: 1, airdate: '2026-01-01' },
+    { id: 2, season: 2, number: 2, airdate: '2026-01-08' },
+    { id: 3, season: 2, number: 3, airdate: '2026-01-15' },
+    { id: 4, season: 2, number: 4, airdate: '2026-01-22' },
+    { id: 5, season: 3, number: 1, airdate: '2026-06-01' }
+  ]);
+  assert.strictEqual(episodesLeftInSeason(episodes, episodes[1]), 3, 'next episode counts itself plus the rest of its season (S2E2, E3, E4 = 3)');
+  assert.strictEqual(episodesLeftInSeason(episodes, episodes[3]), 1, 'last episode of a season counts as 1 left (itself)');
+  assert.strictEqual(episodesLeftInSeason(episodes, null), 0, 'no next episode (caught up) means 0 left');
+  assert.strictEqual(episodesLeftInSeason(episodes, { id: 999, season: 2 }), 0, 'an episode not found in the list returns 0 rather than throwing');
+}
+
+// --- episodesLeftInSeason: specials count toward their season's total ---
+{
+  const episodes = sortedEpisodes([
+    { id: 8, season: 2, number: 8, airdate: '2011-11-06', name: 'Episode 8' },
+    { id: 88, season: 2, number: null, airdate: '2011-12-21', name: 'Behind the Drama' },
+    { id: 241, season: 2, number: null, airdate: '2011-12-25', name: 'Christmas at Downton Abbey' },
+    { id: 66, season: 3, number: 1, airdate: '2012-09-16', name: 'S3E1' }
+  ]);
+  assert.strictEqual(episodesLeftInSeason(episodes, episodes[0]), 3, 'S2E8 plus the two season-2 specials that follow it = 3 left');
+}
+
+// --- seasonsRemaining ---
+{
+  const episodes = sortedEpisodes([
+    { id: 1, season: 1, number: 1, airdate: '2026-01-01' },
+    { id: 2, season: 2, number: 1, airdate: '2026-02-01' },
+    { id: 3, season: 3, number: 1, airdate: '2026-03-01' }
+  ]);
+  assert.deepStrictEqual(seasonsRemaining(episodes, episodes[0]), { remaining: 2, total: 3 }, 'on season 1 of 3, seasons 2 and 3 remain');
+  assert.deepStrictEqual(seasonsRemaining(episodes, episodes[2]), { remaining: 0, total: 3 }, 'on the final season, nothing remains');
+  assert.deepStrictEqual(seasonsRemaining(episodes, null), { remaining: 0, total: 3 }, 'no next episode (caught up) reports 0 remaining but still the correct total');
+}
+
+// --- seasonsRemaining: single-season show ---
+{
+  const episodes = sortedEpisodes([
+    { id: 1, season: 1, number: 1, airdate: '2026-01-01' },
+    { id: 2, season: 1, number: 2, airdate: '2026-01-08' }
+  ]);
+  assert.deepStrictEqual(seasonsRemaining(episodes, episodes[0]), { remaining: 0, total: 1 }, 'a single-season show has 0 remaining, 1 total');
 }
 
 console.log('All logic tests passed.');

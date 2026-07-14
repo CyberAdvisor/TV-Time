@@ -146,6 +146,16 @@ async function testMainFlow() {
   assert.ok(episodeImage, 'episode still image renders when TVmaze provides one');
   assert.strictEqual(episodeImage.getAttribute('src'), 'https://example.com/s4e3-medium.jpg', 'episode image uses the medium-size TVmaze image URL');
 
+  // The Bear mock data is a single season (4) with 4 episodes. Next up is
+  // S4E3 (index 2 of 4), so 2 episodes remain in the season (E3 itself + E4).
+  // No season number greater than 4 exists in the mock data, so 0 of 1
+  // seasons remain.
+  let detailTable = window.document.querySelector('.detail-table');
+  assert.ok(detailTable.textContent.includes('Episodes left in season'), 'detail screen shows episodes-left-in-season row');
+  assert.ok(/Episodes left in season\s*2/.test(detailTable.textContent), 'S4E3 of 4 in-mock-data episodes leaves 2 (E3, E4)');
+  assert.ok(detailTable.textContent.includes('Seasons remaining'), 'detail screen shows seasons-remaining row');
+  assert.ok(/Seasons remaining\s*0 of 1/.test(detailTable.textContent), 'only season 4 exists in mock data, so 0 of 1 seasons remain');
+
   window.document.getElementById('mark-watched-btn').click();
   await wait(10);
   let subLine = window.document.querySelector('.row-sub');
@@ -153,8 +163,9 @@ async function testMainFlow() {
 
   assert.ok(!window.document.querySelector('.episode-image'), 'no broken image element renders when an episode (S4E4) has no TVmaze image');
 
-  const detailTable = window.document.querySelector('.detail-table');
+  detailTable = window.document.querySelector('.detail-table');
   assert.ok(detailTable.textContent.includes('Aug 20, 2026'), 'air date formatted correctly for future episode');
+  assert.ok(/Episodes left in season\s*1/.test(detailTable.textContent), 'S4E4 is the last episode in the mock data, so 1 (itself) remains');
 
   window.document.getElementById('back-btn').click();
   await wait(10);
@@ -458,6 +469,34 @@ async function testBackupRestoreFromFile() {
   console.log('testBackupRestoreFromFile passed.');
 }
 
+async function testEpisodesLeftAndSeasonsRemainingOnDetailScreen() {
+  const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
+  const { window } = dom;
+  freezeDate(window, '2026-07-12T12:00:00');
+  window.fetch = (url) => mockFetch(url);
+
+  // Downton Abbey mock data spans season 2 (4 entries: E7, E8, and two
+  // specials) and season 3 (1 entry). Starting from watched = S2E7, next up
+  // is S2E8: 3 episodes remain in season 2 (E8 + the two specials that
+  // follow it by airdate), and 1 season remains (season 3) out of 2 total.
+  window.localStorage.setItem('my-shows-library-v1', JSON.stringify([
+    { showId: 251, platform: '', watchedEpisodeId: 20864, pendingSeasonNumber: null }
+  ]));
+
+  const scriptBody = html.match(/<script>([\s\S]*)<\/script>/)[1];
+  window.eval(scriptBody);
+  await wait(50);
+
+  window.document.getElementById('row-251').click();
+  await wait(10);
+
+  const detailTable = window.document.querySelector('.detail-table');
+  assert.ok(/Episodes left in season\s*3/.test(detailTable.textContent), 'S2E8 plus two trailing season-2 specials = 3 left in season');
+  assert.ok(/Seasons remaining\s*1 of 2/.test(detailTable.textContent), 'season 3 remains out of 2 total seasons in the mock data');
+
+  console.log('testEpisodesLeftAndSeasonsRemainingOnDetailScreen passed.');
+}
+
 (async () => {
   try {
     await testMainFlow();
@@ -468,6 +507,7 @@ async function testBackupRestoreFromFile() {
     await testBackupDownload();
     await testBackupRestoreFromFile();
     await testAvailableGroupOrdering();
+    await testEpisodesLeftAndSeasonsRemainingOnDetailScreen();
     console.log('All app integration tests passed.');
   } catch (err) {
     console.error('TEST FAILED:', err);

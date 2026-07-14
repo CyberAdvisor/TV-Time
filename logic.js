@@ -131,6 +131,30 @@ function nextBottomAvailableOrder(items) {
   return Math.max(...values) + 1;
 }
 
+// Given a show's full sorted episode list and the "next episode to watch"
+// (as returned by computeShowStatus), returns how many episodes remain in
+// that episode's season, counting the next episode itself as one of them.
+// Specials count toward their season's total same as regular episodes,
+// since sortedEpisodes already places them within their season by airdate.
+function episodesLeftInSeason(episodes, nextEpisode) {
+  if (!nextEpisode) return 0;
+  const seasonEpisodes = episodes.filter(e => e.season === nextEpisode.season);
+  const idx = seasonEpisodes.findIndex(e => e.id === nextEpisode.id);
+  if (idx === -1) return 0;
+  return seasonEpisodes.length - idx;
+}
+
+// Given a show's full sorted episode list and the "next episode to watch",
+// returns { remaining, total }: how many seasons come after the current one
+// (not counting the current season itself), out of how many seasons the
+// show has in total, based on distinct season numbers present in the data.
+function seasonsRemaining(episodes, nextEpisode) {
+  const seasonNumbers = [...new Set(episodes.map(e => e.season))];
+  if (!nextEpisode) return { remaining: 0, total: seasonNumbers.length };
+  const remaining = seasonNumbers.filter(s => s > nextEpisode.season).length;
+  return { remaining, total: seasonNumbers.length };
+}
+
 module.exports = {
   sortedEpisodes,
   findWatchedIndex,
@@ -141,5 +165,7 @@ module.exports = {
   isSpecial,
   formatEpisodeCode,
   nextTopAvailableOrder,
-  nextBottomAvailableOrder
+  nextBottomAvailableOrder,
+  episodesLeftInSeason,
+  seasonsRemaining
 };
