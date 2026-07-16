@@ -3,7 +3,7 @@ const {
   sortedEpisodes, findWatchedIndex, findEpisodeIdBySeasonNumber,
   computeShowStatus, groupShows, formatCountdown, isSpecial, formatEpisodeCode,
   nextTopAvailableOrder, nextBottomAvailableOrder,
-  episodesLeftInSeason, seasonsRemaining
+  episodesLeftInSeason, seasonsRemaining, withArchiveOverride
 } = require('./logic');
 
 const TODAY = '2026-07-12';
@@ -269,6 +269,21 @@ const TODAY = '2026-07-12';
     { id: 2, season: 1, number: 2, airdate: '2026-01-08' }
   ]);
   assert.deepStrictEqual(seasonsRemaining(episodes, episodes[0]), { remaining: 0, total: 1 }, 'a single-season show has 0 remaining, 1 total');
+}
+
+// --- withArchiveOverride ---
+{
+  const availableStatus = { group: 'available', nextEpisode: { id: 1, season: 1, number: 1 } };
+  assert.deepStrictEqual(withArchiveOverride(availableStatus, false), availableStatus, 'not archived: real status passes through unchanged');
+  assert.strictEqual(withArchiveOverride(availableStatus, undefined), availableStatus, 'undefined archived flag (pre-existing data) behaves as not archived');
+
+  const archivedResult = withArchiveOverride(availableStatus, true);
+  assert.strictEqual(archivedResult.group, 'completed', 'archived show always reports as completed, regardless of real status');
+  assert.strictEqual(archivedResult.nextEpisode, null, 'archived show has no actionable next episode');
+  assert.strictEqual(archivedResult.archived, true, 'archived flag carries through onto the returned status');
+
+  const upcomingStatus = { group: 'upcoming', nextEpisode: { airdate: '2027-01-01' }, daysUntil: 100 };
+  assert.strictEqual(withArchiveOverride(upcomingStatus, true).group, 'completed', 'even a show with a known future episode is overridden to completed once archived');
 }
 
 console.log('All logic tests passed.');

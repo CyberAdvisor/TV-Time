@@ -155,6 +155,18 @@ function seasonsRemaining(episodes, nextEpisode) {
   return { remaining, total: seasonNumbers.length };
 }
 
+// A show can be manually "ended" (archived) independent of its actual watch
+// progress or the show's real TVmaze air status - e.g. the user just wants
+// to stop tracking it without deleting their history. When archived, the
+// show always displays in the completed group with no actionable "next
+// episode", regardless of what computeShowStatus would otherwise say.
+// Reactivating (archived: false) simply lets the real status take over
+// again - no separate "un-archive" state is stored beyond the flag itself.
+function withArchiveOverride(status, archived) {
+  if (!archived) return status;
+  return { group: 'completed', nextEpisode: null, archived: true };
+}
+
 module.exports = {
   sortedEpisodes,
   findWatchedIndex,
@@ -167,5 +179,6 @@ module.exports = {
   nextTopAvailableOrder,
   nextBottomAvailableOrder,
   episodesLeftInSeason,
-  seasonsRemaining
+  seasonsRemaining,
+  withArchiveOverride
 };

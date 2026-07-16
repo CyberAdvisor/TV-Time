@@ -206,6 +206,7 @@
   .error-text { color: var(--danger); font-size: 13px; margin: 6px 0 0; }
   .loading { text-align: center; color: var(--text-secondary); padding: 40px; font-size: 14px; }
   .remove-link { color: var(--danger); font-size: 13px; }
+  .text-link { color: var(--accent); font-size: 13px; }
 </style>
 </head>
 <body>
@@ -343,6 +344,16 @@ function seasonsRemaining(episodes, nextEpisode) {
   return { remaining: remaining, total: seasonNumbers.length };
 }
 
+// A show can be manually "ended" (archived) independent of its actual watch
+// progress or the show's real TVmaze air status - e.g. the user just wants
+// to stop tracking it without deleting their history. When archived, the
+// show always displays in the completed group with no actionable "next
+// episode", regardless of what computeShowStatus would otherwise say.
+function withArchiveOverride(status, archived) {
+  if (!archived) return status;
+  return { group: 'completed', nextEpisode: null, archived: true };
+}
+
 function formatCountdown(daysUntil, airdate) {
   if (daysUntil === 0) return 'Today';
   if (daysUntil === 1) return 'Tomorrow';
@@ -459,7 +470,9 @@ function el(html) {
 function renderList() {
   var entries = state.library.map(function (item) {
     var c = state.computed[item.showId];
-    return c ? { item: item, show: c.show, status: c.status, availableOrder: item.availableOrder || 0 } : null;
+    if (!c) return null;
+    var status = withArchiveOverride(c.status, item.archived);
+    return { item: item, show: c.show, status: status, availableOrder: item.availableOrder || 0 };
   }).filter(Boolean);
 
   var groups = groupShows(entries.map(function (e) {
@@ -504,6 +517,13 @@ function renderList() {
         markWatched(e.item.showId);
       };
     }
+    var reactivateBtn = document.getElementById('reactivate-' + e.item.showId);
+    if (reactivateBtn) {
+      reactivateBtn.onclick = function (ev) {
+        ev.stopPropagation();
+        reactivateShow(e.item.showId);
+      };
+    }
   });
 }
 
@@ -523,7 +543,9 @@ function renderRow(e, groupKey) {
   var titleHtml = '<p class="row-title">' + escapeHtml(show.name) + platformText + '</p>';
 
   var subText = '';
-  if (status.nextEpisode) {
+  if (status.archived) {
+    subText = 'Archived';
+  } else if (status.nextEpisode) {
     var code = formatEpisodeCode(status.nextEpisode);
     subText = code + (status.nextEpisode.name ? ' - ' + escapeHtml(status.nextEpisode.name) : '');
   } else if (groupKey === 'completed') {
@@ -537,6 +559,8 @@ function renderRow(e, groupKey) {
     right = '<button class="text" id="mark-' + item.showId + '">Mark watched</button>';
   } else if (groupKey === 'upcoming') {
     right = '<span class="row-right">' + formatCountdown(status.daysUntil, status.nextEpisode.airdate) + '</span>';
+  } else if (status.archived) {
+    right = '<button class="text" id="reactivate-' + item.showId + '">Reactivate</button>';
   }
 
   return '<div class="row" id="row-' + item.showId + '">' +
@@ -568,7 +592,7 @@ function renderDetail() {
   var c = state.computed[state.detailShowId];
   if (!item || !c) { state.view = 'list'; return render(); }
 
-  var status = c.status;
+  var status = withArchiveOverride(c.status, item.archived);
   var ep = status.nextEpisode;
 
   var html = '';
@@ -583,7 +607,7 @@ function renderDetail() {
   if (ep) {
     html += '<p class="row-sub" style="margin-bottom:16px;">' + formatEpisodeCode(ep) + (ep.name ? ' - ' + escapeHtml(ep.name) : '') + '</p>';
   } else {
-    html += '<p class="row-sub" style="margin-bottom:16px;">' + (status.group === 'completed' ? 'All episodes watched' : 'Renewed - no date yet') + '</p>';
+    html += '<p class="row-sub" style="margin-bottom:16px;">' + (status.archived ? 'Archived' : (status.group === 'completed' ? 'All episodes watched' : 'Renewed - no date yet')) + '</p>';
   }
 
   if (item.platform) {
@@ -609,7 +633,13 @@ function renderDetail() {
     }
   }
 
-  html += '<p style="margin-top:24px; text-align:center;"><a href="#" class="remove-link" id="remove-link">Remove show</a></p>';
+  html += '<p style="margin-top:24px; text-align:center;">';
+  if (status.archived) {
+    html += '<a href="#" class="text-link" id="reactivate-link">Reactivate series</a>';
+  } else {
+    html += '<a href="#" class="text-link" id="end-series-link">End series</a>';
+  }
+  html += ' &middot; <a href="#" class="remove-link" id="remove-link">Remove show</a></p>';
 
   root.innerHTML = html;
   document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
@@ -618,6 +648,16 @@ function renderDetail() {
   document.getElementById('remove-link').onclick = function (ev) {
     ev.preventDefault();
     removeShow(item.showId);
+  };
+  var endLink = document.getElementById('end-series-link');
+  if (endLink) endLink.onclick = function (ev) {
+    ev.preventDefault();
+    endSeries(item.showId);
+  };
+  var reactivateLink = document.getElementById('reactivate-link');
+  if (reactivateLink) reactivateLink.onclick = function (ev) {
+    ev.preventDefault();
+    reactivateShow(item.showId);
   };
 }
 
@@ -918,6 +958,26 @@ function removeShow(showId) {
   delete state.computed[showId];
   saveLibrary(state.library);
   state.view = 'list';
+  render();
+}
+
+// Manually ends (archives) a show without deleting it. The show's watch
+// progress and episode data are left untouched - only the archived flag
+// changes - so reactivating later picks up exactly where things left off.
+function endSeries(showId) {
+  var item = state.library.find(function (i) { return i.showId === showId; });
+  if (!item) return;
+  item.archived = true;
+  saveLibrary(state.library);
+  state.view = 'list';
+  render();
+}
+
+function reactivateShow(showId) {
+  var item = state.library.find(function (i) { return i.showId === showId; });
+  if (!item) return;
+  item.archived = false;
+  saveLibrary(state.library);
   render();
 }
 

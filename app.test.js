@@ -469,6 +469,87 @@ async function testBackupRestoreFromFile() {
   console.log('testBackupRestoreFromFile passed.');
 }
 
+async function testEndSeriesAndReactivate() {
+  const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
+  const { window } = dom;
+  freezeDate(window, '2026-07-12T12:00:00');
+  const storageBackend = window.localStorage;
+  window.fetch = (url) => mockFetch(url);
+
+  // The Bear, mid-way through, still very much "available" - a good case
+  // for ending a series the user just wants to stop tracking, not one
+  // that's naturally finished.
+  storageBackend.setItem('my-shows-library-v1', JSON.stringify([
+    { showId: 501, platform: 'Hulu', watchedEpisodeId: null, pendingSeasonNumber: { season: 4, number: 2 } }
+  ]));
+
+  const scriptBody = html.match(/<script>([\s\S]*)<\/script>/)[1];
+  window.eval(scriptBody);
+  await wait(50);
+
+  let sectionLabel = window.document.querySelector('.section-label');
+  assert.strictEqual(sectionLabel.textContent, 'Available now', 'sanity check: starts out available');
+
+  // --- End the series from the detail screen ---
+  window.document.getElementById('row-501').click();
+  await wait(10);
+
+  const endLink = window.document.getElementById('end-series-link');
+  assert.ok(endLink, '"End series" link is present on the detail screen for a non-archived show');
+  assert.ok(!window.document.getElementById('reactivate-link'), 'no "Reactivate series" link while not archived');
+  endLink.click();
+  await wait(10);
+
+  assert.strictEqual(window.state.view, 'list', 'ending a series from detail returns to the list view');
+
+  let persisted = JSON.parse(storageBackend.getItem('my-shows-library-v1'))[0];
+  assert.strictEqual(persisted.archived, true, 'archived flag persisted to storage');
+  assert.strictEqual(persisted.watchedEpisodeId, 1002, 'ending a series does not touch watch progress (still resolved to S4E2, the last-watched episode)');
+
+  sectionLabel = window.document.querySelector('.section-label');
+  assert.strictEqual(sectionLabel.textContent, 'Completed', 'archived show moves into the Completed group in the list, even though it was mid-season');
+
+  let rowSub = window.document.querySelector('.row-sub');
+  assert.strictEqual(rowSub.textContent, 'Archived', 'list row shows "Archived" instead of episode info');
+
+  const reactivateBtn = window.document.getElementById('reactivate-501');
+  assert.ok(reactivateBtn, '"Reactivate" button is present on the archived show\'s list row');
+  assert.strictEqual(reactivateBtn.textContent, 'Reactivate');
+
+  // --- Reactivate from the list row ---
+  reactivateBtn.click();
+  await wait(10);
+
+  sectionLabel = window.document.querySelector('.section-label');
+  assert.strictEqual(sectionLabel.textContent, 'Available now', 'reactivating restores the show\'s real (available) status in the list');
+
+  rowSub = window.document.querySelector('.row-sub');
+  assert.ok(rowSub.textContent.includes('S04E03'), 'reactivating preserves watch progress - still next-up at S4E3 (after watched S4E2), untouched by archiving');
+
+  persisted = JSON.parse(storageBackend.getItem('my-shows-library-v1'))[0];
+  assert.strictEqual(persisted.archived, false, 'archived flag cleared and persisted after reactivating');
+
+  // --- End again, then reactivate from the detail screen this time ---
+  window.document.getElementById('row-501').click();
+  await wait(10);
+  window.document.getElementById('end-series-link').click();
+  await wait(10);
+
+  window.document.getElementById('row-501').click();
+  await wait(10);
+  const reactivateLink = window.document.getElementById('reactivate-link');
+  assert.ok(reactivateLink, '"Reactivate series" link shown on the detail screen of an archived show');
+  assert.ok(!window.document.getElementById('end-series-link'), 'no "End series" link while already archived');
+  reactivateLink.click();
+  await wait(10);
+
+  assert.strictEqual(window.state.view, 'detail', 'reactivating from the detail screen stays on the detail screen');
+  const detailTable = window.document.querySelector('.detail-table');
+  assert.ok(detailTable, 'full episode detail (table, synopsis, mark-watched) reappears once reactivated');
+
+  console.log('testEndSeriesAndReactivate passed.');
+}
+
 async function testEpisodesLeftAndSeasonsRemainingOnDetailScreen() {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'https://example.com' });
   const { window } = dom;
@@ -507,6 +588,7 @@ async function testEpisodesLeftAndSeasonsRemainingOnDetailScreen() {
     await testBackupDownload();
     await testBackupRestoreFromFile();
     await testAvailableGroupOrdering();
+    await testEndSeriesAndReactivate();
     await testEpisodesLeftAndSeasonsRemainingOnDetailScreen();
     console.log('All app integration tests passed.');
   } catch (err) {

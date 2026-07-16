@@ -4,7 +4,7 @@ A simple TV episode tracker: keep a list of shows you're watching, mark episodes
 
 ## Why this exists
 
-Built after the TV Time app shut down. The goal was a minimal replacement that does one thing well: given a show and where you left off, tell you what episode is up next — with no ads, no account, no social feed, and no clutter.
+Built after the TV Time app shut down. The goal was a minimal replacement that does one thing well: given a show and where you left off, tell you what episode to watch next — with no ads, no account, no social feed, and no clutter.
 
 ## Screenshots
 
@@ -24,6 +24,7 @@ Built after the TV Time app shut down. The goal was a minimal replacement that d
   - **Completed** — you've watched everything and the series has ended
 - **Includes specials** (Christmas specials, series finales tagged as specials, etc.) in their correct place in the timeline, based on air date — not just numbered regular episodes
 - **One tap to mark watched**, which then shows the next episode
+- **End a series without deleting it** — from the detail screen, tap "End series" to move a show into Completed and mark it Archived, without losing your watch history. Tap "Reactivate" on that row (or "Reactivate series" on its detail screen) to pick back up exactly where you left off
 
 ## How it's built
 

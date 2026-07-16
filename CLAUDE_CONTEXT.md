@@ -16,7 +16,8 @@ Each library item (persisted to `localStorage` under the key `my-shows-library-v
   platform: "Hulu",         // free-text, user-entered
   watchedEpisodeId: 20865,  // TVmaze's unique episode id, or null if nothing watched yet
   pendingSeasonNumber: { season: 2, number: 8 },  // transient; see below
-  availableOrder: 0          // recency marker for sort position within "Available now"; see below
+  availableOrder: 0,         // recency marker for sort position within "Available now"; see below
+  archived: false            // manually "ended" without deleting; see below (absent/undefined == false)
 }
 ```
 
@@ -81,6 +82,18 @@ The detail screen's `.detail-table` includes two rows below "Season":
 - **Seasons remaining** — rendered as "X of Y" (e.g. "1 of 3"): X is how many seasons come *after* the current one, Y is the total distinct season count in the show's episode data. Computed by `seasonsRemaining(episodes, nextEpisode)`, which returns `{ remaining, total }`.
 
 Both functions take the already-fetched episode list (no extra TVmaze calls) and are mirrored in `index.html`'s inline script, same as the rest of `logic.js`. Tested in `logic.test.js` (including a specials-counted-correctly case) and end-to-end in `app.test.js` (`testEpisodesLeftAndSeasonsRemainingOnDetailScreen`).
+
+## Ending a series without deleting it (archiving)
+
+A show can be manually "ended" from the detail screen ("End series" link, next to "Remove show") without losing its watch history, unlike "Remove show" which deletes the library item entirely. This is independent of the show's actual watch progress or its real TVmaze air status - e.g. the user just wants to stop tracking a show that's still airing.
+
+- Storage: sets `archived: true` on the library item. Nothing else about the item changes (`watchedEpisodeId` etc. are left exactly as they were), so reactivating resumes exactly where things left off.
+- Display: `withArchiveOverride(status, archived)` in `logic.js` takes the show's real computed status and, if `archived` is true, forces it to `{ group: 'completed', nextEpisode: null, archived: true }` regardless of what the real status would otherwise be. This is applied at render time (in `renderList` and `renderDetail`), not baked into `computeShowStatus` itself - archiving is a user action layered on top of, not a replacement for, the real episode-tracking logic.
+- The list row for an archived show shows "Archived" instead of episode info, and a "Reactivate" button in place of whatever action that group would normally show (nothing, for Completed). The detail screen shows "Archived" as the subtitle, skips the episode table/synopsis/mark-watched button (since `nextEpisode` is null), and swaps "End series" for "Reactivate series" next to "Remove show".
+- Reactivating (`reactivateShow`) just sets `archived: false` and re-renders; the real status takes over again immediately since nothing else was touched.
+- Tested end-to-end in `app.test.js` (`testEndSeriesAndReactivate`): ending a mid-season show from detail, verifying it lands in Completed as "Archived", reactivating from the list row and confirming watch progress survived, then repeating the end/reactivate cycle from the detail screen itself.
+
+If you touch this, don't be tempted to fold `archived` into `computeShowStatus` in `logic.js` - keeping it as a separate override step is what lets reactivating be a simple flag flip rather than needing to recompute or guess at the "real" status.
 
 ## Testing
 
