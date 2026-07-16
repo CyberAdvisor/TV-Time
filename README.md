@@ -24,7 +24,7 @@ Built after the TV Time app shut down. The goal was a minimal replacement that d
   - **Completed** — you've watched everything and the series has ended
 - **Includes specials** (Christmas specials, series finales tagged as specials, etc.) in their correct place in the timeline, based on air date — not just numbered regular episodes
 - **One tap to mark watched**, which then shows the next episode
-- **End a series without deleting it** — from the detail screen, tap "End series" to move a show into Completed and mark it Archived (with the date), without losing your watch history. Its detail screen keeps a record of your last watched episode, episodes/seasons that were remaining, and when you archived it. Tap "Reactivate" on that row (or "Reactivate series" on its detail screen) to pick back up exactly where you left off
+- **Suspend a series without deleting it** — from the detail screen, tap "Suspend series" to move a show into Completed and mark it Archived (with the date), without losing your watch history. Its detail screen keeps a record of your last watched episode, episodes/seasons that were remaining, and when you archived it. Tap "Reactivate" on that row (or "Reactivate series" on its detail screen) to pick back up exactly where you left off
 
 ## How it's built
 

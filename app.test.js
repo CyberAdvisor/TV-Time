@@ -495,7 +495,7 @@ async function testEndSeriesAndReactivate() {
   await wait(10);
 
   const endLink = window.document.getElementById('end-series-link');
-  assert.ok(endLink, '"End series" link is present on the detail screen for a non-archived show');
+  assert.ok(endLink, '"Suspend series" link is present on the detail screen for a non-archived show');
   assert.ok(!window.document.getElementById('reactivate-link'), 'no "Reactivate series" link while not archived');
   endLink.click();
   await wait(10);
@@ -553,7 +553,7 @@ async function testEndSeriesAndReactivate() {
 
   const reactivateLink = window.document.getElementById('reactivate-link');
   assert.ok(reactivateLink, '"Reactivate series" link shown on the detail screen of an archived show');
-  assert.ok(!window.document.getElementById('end-series-link'), 'no "End series" link while already archived');
+  assert.ok(!window.document.getElementById('end-series-link'), 'no "Suspend series" link while already archived');
   reactivateLink.click();
   await wait(10);
 

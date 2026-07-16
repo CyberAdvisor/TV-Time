@@ -168,7 +168,7 @@ function withArchiveOverride(status, archived) {
 }
 
 // Captures a snapshot of a show's progress at the moment it's archived
-// (manually ended via "End series"), since once archived the show no
+// (manually ended via "Suspend series"), since once archived the show no
 // longer tracks a live "next episode" to derive this from later - the
 // snapshot is what gets displayed on an archived show's row/detail screen
 // from then on, until it's reactivated (at which point it's discarded and
