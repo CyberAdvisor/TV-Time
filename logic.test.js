@@ -3,7 +3,7 @@ const {
   sortedEpisodes, findWatchedIndex, findEpisodeIdBySeasonNumber,
   computeShowStatus, groupShows, formatCountdown, isSpecial, formatEpisodeCode,
   nextTopAvailableOrder, nextBottomAvailableOrder,
-  episodesLeftInSeason, seasonsRemaining, withArchiveOverride
+  episodesLeftInSeason, seasonsRemaining, withArchiveOverride, buildArchiveSnapshot
 } = require('./logic');
 
 const TODAY = '2026-07-12';
@@ -284,6 +284,29 @@ const TODAY = '2026-07-12';
 
   const upcomingStatus = { group: 'upcoming', nextEpisode: { airdate: '2027-01-01' }, daysUntil: 100 };
   assert.strictEqual(withArchiveOverride(upcomingStatus, true).group, 'completed', 'even a show with a known future episode is overridden to completed once archived');
+}
+
+// --- buildArchiveSnapshot ---
+{
+  const episodes = sortedEpisodes([
+    { id: 1, season: 1, number: 1, airdate: '2026-01-01' },
+    { id: 2, season: 1, number: 2, airdate: '2026-01-08' },
+    { id: 3, season: 1, number: 3, airdate: '2026-01-15' },
+    { id: 4, season: 2, number: 1, airdate: '2026-06-01' }
+  ]);
+
+  const snap = buildArchiveSnapshot(episodes, 2, episodes[2]); // watched S1E2, next is S1E3
+  assert.strictEqual(snap.lastWatchedCode, 'S01E02');
+  assert.strictEqual(snap.episodesLeftInSeason, episodesLeftInSeason(episodes, episodes[2]), 'matches episodesLeftInSeason computed directly (S1E3 itself = 1 left)');
+  assert.deepStrictEqual(snap.seasonsRemaining, seasonsRemaining(episodes, episodes[2]), 'matches seasonsRemaining computed directly (season 2 remains = 1 of 2)');
+
+  const snapNothingWatched = buildArchiveSnapshot(episodes, null, episodes[0]);
+  assert.strictEqual(snapNothingWatched.lastWatchedCode, 'Not started', 'no watched episode yet reports "Not started" rather than a bogus code');
+
+  const snapCaughtUp = buildArchiveSnapshot(episodes, 4, null); // watched everything, no next episode
+  assert.strictEqual(snapCaughtUp.lastWatchedCode, 'S02E01', 'last watched still resolves correctly even with no next episode');
+  assert.strictEqual(snapCaughtUp.episodesLeftInSeason, 0, 'no next episode means 0 episodes left in season');
+  assert.deepStrictEqual(snapCaughtUp.seasonsRemaining, { remaining: 0, total: 2 }, 'no next episode means 0 seasons remaining, but total is still reported');
 }
 
 console.log('All logic tests passed.');

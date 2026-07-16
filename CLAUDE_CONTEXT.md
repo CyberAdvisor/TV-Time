@@ -17,7 +17,13 @@ Each library item (persisted to `localStorage` under the key `my-shows-library-v
   watchedEpisodeId: 20865,  // TVmaze's unique episode id, or null if nothing watched yet
   pendingSeasonNumber: { season: 2, number: 8 },  // transient; see below
   availableOrder: 0,         // recency marker for sort position within "Available now"; see below
-  archived: false            // manually "ended" without deleting; see below (absent/undefined == false)
+  archived: false,           // manually "ended" without deleting; see below (absent/undefined == false)
+  archivedAt: "2026-07-16",  // 'YYYY-MM-DD', set when archived, deleted on reactivation
+  archivedSnapshot: {        // captured at archive time, deleted on reactivation; see below
+    lastWatchedCode: "S04E02",
+    episodesLeftInSeason: 2,
+    seasonsRemaining: { remaining: 0, total: 1 }
+  }
 }
 ```
 
@@ -85,15 +91,16 @@ Both functions take the already-fetched episode list (no extra TVmaze calls) and
 
 ## Ending a series without deleting it (archiving)
 
-A show can be manually "ended" from the detail screen ("End series" link, next to "Remove show") without losing its watch history, unlike "Remove show" which deletes the library item entirely. This is independent of the show's actual watch progress or its real TVmaze air status - e.g. the user just wants to stop tracking a show that's still airing.
+A show can be manually "ended" from the detail screen ("End series" link, next to "Delete series") without losing its watch history, unlike "Delete series" which deletes the library item entirely. This is independent of the show's actual watch progress or its real TVmaze air status - e.g. the user just wants to stop tracking a show that's still airing.
 
-- Storage: sets `archived: true` on the library item. Nothing else about the item changes (`watchedEpisodeId` etc. are left exactly as they were), so reactivating resumes exactly where things left off.
+- Storage: sets `archived: true`, `archivedAt` (today's date, `'YYYY-MM-DD'`), and `archivedSnapshot` (see below) on the library item. `watchedEpisodeId` etc. are left exactly as they were, so reactivating resumes exactly where things left off.
+- Snapshot: because an archived show no longer tracks a live "next episode," a snapshot of where things stood is captured once, at archive time, via `buildArchiveSnapshot(episodes, watchedEpisodeId, nextEpisode)` in `logic.js`. It records `lastWatchedCode` (the last-watched episode's code, or `'Not started'`), `episodesLeftInSeason`, and `seasonsRemaining` - reusing the same `findWatchedIndex`/`formatEpisodeCode`/`episodesLeftInSeason`/`seasonsRemaining` functions the live detail screen uses, just called once and frozen into the item instead of recomputed on every render.
 - Display: `withArchiveOverride(status, archived)` in `logic.js` takes the show's real computed status and, if `archived` is true, forces it to `{ group: 'completed', nextEpisode: null, archived: true }` regardless of what the real status would otherwise be. This is applied at render time (in `renderList` and `renderDetail`), not baked into `computeShowStatus` itself - archiving is a user action layered on top of, not a replacement for, the real episode-tracking logic.
-- The list row for an archived show shows "Archived" instead of episode info, and a "Reactivate" button in place of whatever action that group would normally show (nothing, for Completed). The detail screen shows "Archived" as the subtitle, skips the episode table/synopsis/mark-watched button (since `nextEpisode` is null), and swaps "End series" for "Reactivate series" next to "Remove show".
-- Reactivating (`reactivateShow`) just sets `archived: false` and re-renders; the real status takes over again immediately since nothing else was touched.
-- Tested end-to-end in `app.test.js` (`testEndSeriesAndReactivate`): ending a mid-season show from detail, verifying it lands in Completed as "Archived", reactivating from the list row and confirming watch progress survived, then repeating the end/reactivate cycle from the detail screen itself.
+- The list row for an archived show shows "Archived" plus the archive date (e.g. "Archived Jul 16, 2026") instead of episode info, and a "Reactivate" button in place of whatever action that group would normally show (nothing, for Completed). The detail screen shows the same "Archived <date>" as the subtitle, replaces the usual episode table with a snapshot table (Last watched / Episodes left in season / Seasons remaining / Archived on), skips the synopsis and mark-watched button, and swaps "End series" for "Reactivate series" next to "Delete series".
+- Reactivating (`reactivateShow`) sets `archived: false` and deletes `archivedAt`/`archivedSnapshot` (so they don't linger stale if the show is archived again later with different progress), then re-renders; the real status takes over again immediately.
+- Tested end-to-end in `app.test.js` (`testEndSeriesAndReactivate`): ending a mid-season show from detail, verifying it lands in Completed with the correct "Archived <date>" tag and snapshot values, reactivating from the list row and confirming watch progress and snapshot-clearing both work, then repeating the end/reactivate cycle from the detail screen itself and checking the snapshot table's contents directly.
 
-If you touch this, don't be tempted to fold `archived` into `computeShowStatus` in `logic.js` - keeping it as a separate override step is what lets reactivating be a simple flag flip rather than needing to recompute or guess at the "real" status.
+If you touch this, don't be tempted to fold `archived` into `computeShowStatus` in `logic.js` - keeping it as a separate override step is what lets reactivating be a simple flag flip rather than needing to recompute or guess at the "real" status. Likewise, don't compute the snapshot fields live on every render of an archived show - that would defeat the purpose (showing what things looked like *at archive time*, not now) and silently break if the show's TVmaze data changes later.
 
 ## Testing
 

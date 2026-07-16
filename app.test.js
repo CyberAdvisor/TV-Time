@@ -505,12 +505,17 @@ async function testEndSeriesAndReactivate() {
   let persisted = JSON.parse(storageBackend.getItem('my-shows-library-v1'))[0];
   assert.strictEqual(persisted.archived, true, 'archived flag persisted to storage');
   assert.strictEqual(persisted.watchedEpisodeId, 1002, 'ending a series does not touch watch progress (still resolved to S4E2, the last-watched episode)');
+  assert.strictEqual(persisted.archivedAt, '2026-07-12', "archived date persisted, using today's (frozen) date");
+  assert.ok(persisted.archivedSnapshot, 'archive snapshot persisted');
+  assert.strictEqual(persisted.archivedSnapshot.lastWatchedCode, 'S04E02', 'snapshot records the last watched episode (S4E2), not the next one');
+  assert.strictEqual(persisted.archivedSnapshot.episodesLeftInSeason, 2, 'snapshot captures episodes left in season at archive time (S4E3 + S4E4)');
+  assert.deepStrictEqual(persisted.archivedSnapshot.seasonsRemaining, { remaining: 0, total: 1 }, 'snapshot captures seasons remaining at archive time (only season 4 exists in mock data)');
 
   sectionLabel = window.document.querySelector('.section-label');
   assert.strictEqual(sectionLabel.textContent, 'Completed', 'archived show moves into the Completed group in the list, even though it was mid-season');
 
   let rowSub = window.document.querySelector('.row-sub');
-  assert.strictEqual(rowSub.textContent, 'Archived', 'list row shows "Archived" instead of episode info');
+  assert.strictEqual(rowSub.textContent, 'Archived Jul 12, 2026', 'list row shows "Archived" plus the archive date instead of episode info');
 
   const reactivateBtn = window.document.getElementById('reactivate-501');
   assert.ok(reactivateBtn, '"Reactivate" button is present on the archived show\'s list row');
@@ -528,8 +533,10 @@ async function testEndSeriesAndReactivate() {
 
   persisted = JSON.parse(storageBackend.getItem('my-shows-library-v1'))[0];
   assert.strictEqual(persisted.archived, false, 'archived flag cleared and persisted after reactivating');
+  assert.strictEqual(persisted.archivedAt, undefined, 'archivedAt discarded on reactivation, not left stale');
+  assert.strictEqual(persisted.archivedSnapshot, undefined, 'archivedSnapshot discarded on reactivation, not left stale');
 
-  // --- End again, then reactivate from the detail screen this time ---
+  // --- End again, and check the snapshot table on the detail screen ---
   window.document.getElementById('row-501').click();
   await wait(10);
   window.document.getElementById('end-series-link').click();
@@ -537,6 +544,13 @@ async function testEndSeriesAndReactivate() {
 
   window.document.getElementById('row-501').click();
   await wait(10);
+
+  const archivedDetailTable = window.document.querySelector('.detail-table');
+  assert.ok(archivedDetailTable, 'archived show still shows a detail table (the snapshot), not a blank screen');
+  assert.ok(archivedDetailTable.textContent.includes('Last watched'), 'snapshot table shows last watched episode');
+  assert.ok(/Last watched\s*S04E02/.test(archivedDetailTable.textContent), 'last watched still reflects S4E2 - watch progress was never touched by the archive/reactivate cycle');
+  assert.ok(archivedDetailTable.textContent.includes('Archived on'), 'snapshot table shows the archive date');
+
   const reactivateLink = window.document.getElementById('reactivate-link');
   assert.ok(reactivateLink, '"Reactivate series" link shown on the detail screen of an archived show');
   assert.ok(!window.document.getElementById('end-series-link'), 'no "End series" link while already archived');

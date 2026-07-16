@@ -354,6 +354,19 @@ function withArchiveOverride(status, archived) {
   return { group: 'completed', nextEpisode: null, archived: true };
 }
 
+// Captures a snapshot of a show's progress at the moment it's archived,
+// since once archived the show no longer tracks a live "next episode" to
+// derive this from later.
+function buildArchiveSnapshot(episodes, watchedEpisodeId, nextEpisode) {
+  var watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
+  var lastWatchedEpisode = watchedIdx === -1 ? null : episodes[watchedIdx];
+  return {
+    lastWatchedCode: lastWatchedEpisode ? formatEpisodeCode(lastWatchedEpisode) : 'Not started',
+    episodesLeftInSeason: episodesLeftInSeason(episodes, nextEpisode),
+    seasonsRemaining: seasonsRemaining(episodes, nextEpisode)
+  };
+}
+
 function formatCountdown(daysUntil, airdate) {
   if (daysUntil === 0) return 'Today';
   if (daysUntil === 1) return 'Tomorrow';
@@ -544,7 +557,7 @@ function renderRow(e, groupKey) {
 
   var subText = '';
   if (status.archived) {
-    subText = 'Archived';
+    subText = 'Archived' + (item.archivedAt ? ' ' + formatDate(item.archivedAt) : '');
   } else if (status.nextEpisode) {
     var code = formatEpisodeCode(status.nextEpisode);
     subText = code + (status.nextEpisode.name ? ' - ' + escapeHtml(status.nextEpisode.name) : '');
@@ -606,8 +619,10 @@ function renderDetail() {
 
   if (ep) {
     html += '<p class="row-sub" style="margin-bottom:16px;">' + formatEpisodeCode(ep) + (ep.name ? ' - ' + escapeHtml(ep.name) : '') + '</p>';
+  } else if (status.archived) {
+    html += '<p class="row-sub" style="margin-bottom:16px;">Archived' + (item.archivedAt ? ' ' + formatDate(item.archivedAt) : '') + '</p>';
   } else {
-    html += '<p class="row-sub" style="margin-bottom:16px;">' + (status.archived ? 'Archived' : (status.group === 'completed' ? 'All episodes watched' : 'Renewed - no date yet')) + '</p>';
+    html += '<p class="row-sub" style="margin-bottom:16px;">' + (status.group === 'completed' ? 'All episodes watched' : 'Renewed - no date yet') + '</p>';
   }
 
   if (item.platform) {
@@ -631,6 +646,14 @@ function renderDetail() {
     if (status.group === 'available') {
       html += '<button class="primary" id="mark-watched-btn">Mark watched</button>';
     }
+  } else if (status.archived && item.archivedSnapshot) {
+    var snap = item.archivedSnapshot;
+    html += '<table class="detail-table">';
+    html += '<tr><td>Last watched</td><td>' + escapeHtml(snap.lastWatchedCode) + '</td></tr>';
+    html += '<tr><td>Episodes left in season</td><td>' + snap.episodesLeftInSeason + '</td></tr>';
+    html += '<tr><td>Seasons remaining</td><td>' + snap.seasonsRemaining.remaining + ' of ' + snap.seasonsRemaining.total + '</td></tr>';
+    html += '<tr><td>Archived on</td><td>' + (item.archivedAt ? formatDate(item.archivedAt) : 'Unknown') + '</td></tr>';
+    html += '</table>';
   }
 
   html += '<p style="margin-top:24px; text-align:center;">';
@@ -639,7 +662,7 @@ function renderDetail() {
   } else {
     html += '<a href="#" class="text-link" id="end-series-link">End series</a>';
   }
-  html += ' &middot; <a href="#" class="remove-link" id="remove-link">Remove show</a></p>';
+  html += ' &middot; <a href="#" class="remove-link" id="remove-link">Delete series</a></p>';
 
   root.innerHTML = html;
   document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
@@ -964,10 +987,18 @@ function removeShow(showId) {
 // Manually ends (archives) a show without deleting it. The show's watch
 // progress and episode data are left untouched - only the archived flag
 // changes - so reactivating later picks up exactly where things left off.
+// A snapshot of "where things stood" is captured at archive time (last
+// watched episode, episodes/seasons remaining, and today's date), since
+// once archived the show no longer tracks a live "next episode" to derive
+// this from.
 function endSeries(showId) {
   var item = state.library.find(function (i) { return i.showId === showId; });
-  if (!item) return;
+  var c = state.computed[showId];
+  if (!item || !c) return;
+
   item.archived = true;
+  item.archivedAt = new Date().toISOString().slice(0, 10);
+  item.archivedSnapshot = buildArchiveSnapshot(c.episodes, item.watchedEpisodeId, c.status.nextEpisode);
   saveLibrary(state.library);
   state.view = 'list';
   render();
@@ -977,6 +1008,8 @@ function reactivateShow(showId) {
   var item = state.library.find(function (i) { return i.showId === showId; });
   if (!item) return;
   item.archived = false;
+  delete item.archivedAt;
+  delete item.archivedSnapshot;
   saveLibrary(state.library);
   render();
 }

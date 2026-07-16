@@ -167,6 +167,22 @@ function withArchiveOverride(status, archived) {
   return { group: 'completed', nextEpisode: null, archived: true };
 }
 
+// Captures a snapshot of a show's progress at the moment it's archived
+// (manually ended via "End series"), since once archived the show no
+// longer tracks a live "next episode" to derive this from later - the
+// snapshot is what gets displayed on an archived show's row/detail screen
+// from then on, until it's reactivated (at which point it's discarded and
+// the real status takes over again).
+function buildArchiveSnapshot(episodes, watchedEpisodeId, nextEpisode) {
+  const watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
+  const lastWatchedEpisode = watchedIdx === -1 ? null : episodes[watchedIdx];
+  return {
+    lastWatchedCode: lastWatchedEpisode ? formatEpisodeCode(lastWatchedEpisode) : 'Not started',
+    episodesLeftInSeason: episodesLeftInSeason(episodes, nextEpisode),
+    seasonsRemaining: seasonsRemaining(episodes, nextEpisode)
+  };
+}
+
 module.exports = {
   sortedEpisodes,
   findWatchedIndex,
@@ -180,5 +196,6 @@ module.exports = {
   nextBottomAvailableOrder,
   episodesLeftInSeason,
   seasonsRemaining,
-  withArchiveOverride
+  withArchiveOverride,
+  buildArchiveSnapshot
 };
