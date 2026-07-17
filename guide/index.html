@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>How to use My Shows</title>
+<meta name="description" content="How to add a show, understand the four categories, and suspend or delete a series in My Shows." />
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f7f7;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+    --text-secondary: #6b6b6b;
+    --text-muted: #9a9a9a;
+    --accent: #0a66c2;
+    --accent-bg: #e8f1fb;
+    --danger: #c02020;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121212;
+      --surface: #1c1c1c;
+      --border: #333333;
+      --text: #f0f0f0;
+      --text-secondary: #a0a0a0;
+      --text-muted: #777777;
+      --accent: #6db2ff;
+      --accent-bg: #16283b;
+      --danger: #ff6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
+  }
+  .back-link { font-size: 14px; color: var(--text-secondary); text-decoration: none; }
+  .back-link:hover { text-decoration: underline; }
+  h1 { font-size: 30px; font-weight: 600; margin: 16px 0 6px; }
+  .subhead { font-size: 16px; color: var(--text-secondary); margin: 0 0 16px; }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 24px 0 44px;
+    font-size: 15px;
+  }
+  .toc p { margin: 0 0 8px; font-weight: 500; color: var(--text-secondary); }
+  .toc ol { margin: 0; padding-left: 20px; }
+  .toc li { margin-bottom: 4px; }
+  h2 { font-size: 22px; font-weight: 600; margin: 52px 0 12px; scroll-margin-top: 20px; }
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  a { color: var(--accent); }
+  img.shot {
+    width: 100%;
+    max-width: 460px;
+    display: block;
+    margin: 20px auto;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+  img.shot.wide { max-width: 100%; }
+  .caption {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: -8px 0 24px;
+  }
+  .steps { counter-reset: step; list-style: none; padding-left: 0; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 34px;
+    margin-bottom: 14px;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .category-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+  }
+  .category-card h3 { margin: 0 0 4px; font-size: 16px; }
+  .category-card p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+  .note {
+    background: var(--accent-bg);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--text);
+  }
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+  footer a { color: var(--text-secondary); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <a class="back-link" href="/">&larr; My Shows</a>
+  <h1>How to use My Shows</h1>
+  <p class="subhead">Everything below happens in your own browser — nothing to install, nothing to configure.</p>
+
+  <div class="toc">
+    <p>On this page</p>
+    <ol>
+      <li><a href="#adding-a-show">Adding a show</a></li>
+      <li><a href="#the-four-categories">The four categories</a></li>
+      <li><a href="#suspending-a-show">Suspending a show</a></li>
+      <li><a href="#deleting-a-series">Deleting a series</a></li>
+    </ol>
+  </div>
+
+  <h2 id="adding-a-show">Adding a show</h2>
+  <ol class="steps">
+    <li>Tap the <strong>+</strong> button on the main screen.</li>
+    <li>Search for the show by name. Results come from TVmaze's free database, so results appear as you type.</li>
+    <li>Tap the show to select it.</li>
+    <li>Optionally note where you're watching it (Hulu, Netflix, whatever you use).</li>
+    <li>Enter the last season and episode you watched — or leave both blank if you haven't started. This tells My Shows exactly what to line up as your next episode.</li>
+    <li>Tap <strong>Add show</strong>. It'll appear in the right category automatically.</li>
+  </ol>
+  <img class="shot" src="images/add-show.png" alt="The add show screen: a search field with 'The Bear' entered, a selected search result, a Watching on field set to Hulu, and Season/Episode fields set to 4 and 2" />
+  <p class="caption">The add show screen</p>
+
+  <h2 id="the-four-categories">The four categories</h2>
+  <p>Every show you track lands in exactly one of four groups, based on what's happening with it right now:</p>
+
+  <div class="category-card">
+    <h3>Available now</h3>
+    <p>The next episode you haven't watched has already aired. Tap "Mark watched" and it moves straight to the following episode.</p>
+  </div>
+  <div class="category-card">
+    <h3>Upcoming</h3>
+    <p>The next episode has a known future air date. Shows a countdown so you know when to check back.</p>
+  </div>
+  <div class="category-card">
+    <h3>Pending return</h3>
+    <p>You're caught up, the show has been renewed, but no return date has been announced yet.</p>
+  </div>
+  <div class="category-card">
+    <h3>Completed</h3>
+    <p>You've watched every episode and the series itself has ended — or you've suspended it (see below).</p>
+  </div>
+
+  <img class="shot wide" src="images/categories.png" alt="The four category sections in the list view: Available now with The Bear, Upcoming with Severance and a countdown, Pending return with Stranger Things, and Completed with Fleabag" />
+  <p class="caption">One example show in each category</p>
+
+  <h2 id="suspending-a-show">Suspending a show</h2>
+  <p>Want to stop tracking a show without losing your place or deleting your history? Open the show's detail screen and tap <strong>Suspend series</strong>.</p>
+  <ul>
+    <li>It moves into <strong>Completed</strong>, tagged "Archived" with today's date.</li>
+    <li>Your last watched episode and how many episodes/seasons were left are recorded at the moment you suspend it, so you can see exactly where you left off later.</li>
+    <li>Nothing is deleted — your watch progress is preserved untouched.</li>
+  </ul>
+  <img class="shot wide" src="images/archived-row.png" alt="An archived show's row in the Completed section, showing 'Archived Jul 17, 2026' and a Reactivate button" />
+  <p class="caption">An archived show, with a Reactivate button</p>
+  <p>To pick a suspended show back up, tap <strong>Reactivate</strong> on its row (or "Reactivate series" on its detail screen). It returns to whichever category its actual progress puts it in — exactly as if it had never been suspended.</p>
+
+  <h2 id="deleting-a-series">Deleting a series</h2>
+  <p>Deleting is different from suspending: it's permanent. On the show's detail screen, <strong>Suspend series</strong> and <strong>Delete series</strong> sit next to each other — it's worth knowing which is which before you tap.</p>
+  <img class="shot wide" src="images/detail-actions.png" alt="The two links at the bottom of a show's detail screen: Suspend series and Delete series, each explained" />
+  <p class="caption">Suspend keeps your history. Delete removes it for good.</p>
+  <p class="note">Tapping <strong>Delete series</strong> immediately removes the show and its watch history from your list. There's no confirmation step and no undo — if you might want the show back later, use Suspend instead.</p>
+
+  <footer>
+    <p><a href="/changelog/">Changelog</a> &middot; <a href="https://github.com/CyberAdvisor/TV-Time" target="_blank" rel="noopener">Source on GitHub</a> &middot; <a href="https://github.com/CyberAdvisor/TV-Time/issues" target="_blank" rel="noopener">Report an issue</a></p>
+  </footer>
+
+</div>
+</body>
+</html>

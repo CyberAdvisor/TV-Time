@@ -1,0 +1,201 @@
+// Pure logic functions for the show tracker. Kept separate from DOM/fetch code
+// so they can be unit tested in isolation before being embedded in the app.
+
+// Includes both regular episodes and specials (which have season set but
+// number: null in TVmaze's data). Sorted chronologically by airdate so
+// specials slot into their real broadcast position. Episodes with no
+// airdate at all can't be placed in time, so they sort to the end grouped
+// by season/number as a fallback.
+function sortedEpisodes(rawEpisodes) {
+  return rawEpisodes
+    .filter(e => e.season != null)
+    .slice()
+    .sort((a, b) => {
+      if (a.airdate && b.airdate) {
+        if (a.airdate !== b.airdate) return a.airdate.localeCompare(b.airdate);
+        // same-day tiebreak: numbered episodes by number, specials last
+        return (a.number ?? Infinity) - (b.number ?? Infinity);
+      }
+      if (a.airdate && !b.airdate) return -1;
+      if (!a.airdate && b.airdate) return 1;
+      return a.season - b.season || (a.number ?? Infinity) - (b.number ?? Infinity);
+    });
+}
+
+function isSpecial(episode) {
+  return episode.number == null;
+}
+
+function formatEpisodeCode(episode) {
+  const s = String(episode.season).padStart(2, '0');
+  if (isSpecial(episode)) return 'S' + s + ' Special';
+  return 'S' + s + 'E' + String(episode.number).padStart(2, '0');
+}
+
+function findWatchedIndex(episodes, watchedEpisodeId) {
+  if (watchedEpisodeId == null) return -1;
+  return episodes.findIndex(e => e.id === watchedEpisodeId);
+}
+
+// Resolves a user-entered season/number (only ever used for regular episodes,
+// since specials aren't nameable this way) to the episode's unique id.
+// Regular episode numbers are unique within a season, so this is always
+// unambiguous, unlike matching on season+number for specials.
+function findEpisodeIdBySeasonNumber(episodes, season, number) {
+  const match = episodes.find(e => e.season === season && e.number === number);
+  return match ? match.id : null;
+}
+
+// today: 'YYYY-MM-DD' string, defaults to system date if omitted
+function computeShowStatus(show, episodes, watchedEpisodeId, today) {
+  today = today || new Date().toISOString().slice(0, 10);
+  const watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
+  const nextIdx = watchedIdx + 1;
+
+  if (nextIdx >= episodes.length) {
+    if (show.status === 'Ended') {
+      return { group: 'completed', nextEpisode: null };
+    }
+    return { group: 'pending', nextEpisode: null };
+  }
+
+  const nextEpisode = episodes[nextIdx];
+
+  if (!nextEpisode.airdate) {
+    return { group: 'pending', nextEpisode };
+  }
+
+  if (nextEpisode.airdate <= today) {
+    return { group: 'available', nextEpisode };
+  }
+
+  const daysUntil = Math.round(
+    (new Date(nextEpisode.airdate + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000
+  );
+  return { group: 'upcoming', nextEpisode, daysUntil };
+}
+
+// Sort order within each group:
+// - upcoming: soonest air date first
+// - pending/completed: alphabetical
+// - available: by availableOrder (a recency marker set by the app when a
+//   show is added, or when it stays available right after being marked
+//   watched); lower value = higher up. Untouched shows default to 0.
+function sortWithinGroup(entries, group) {
+  if (group === 'upcoming') {
+    return entries.slice().sort((a, b) => a.status.nextEpisode.airdate.localeCompare(b.status.nextEpisode.airdate));
+  }
+  if (group === 'pending' || group === 'completed') {
+    return entries.slice().sort((a, b) => a.show.name.localeCompare(b.show.name));
+  }
+  if (group === 'available') {
+    return entries.slice().sort((a, b) => (a.availableOrder || 0) - (b.availableOrder || 0));
+  }
+  return entries;
+}
+
+function groupShows(showsWithStatus) {
+  const groups = { available: [], upcoming: [], pending: [], completed: [] };
+  for (const entry of showsWithStatus) {
+    groups[entry.status.group].push(entry);
+  }
+  groups.available = sortWithinGroup(groups.available, 'available');
+  groups.upcoming = sortWithinGroup(groups.upcoming, 'upcoming');
+  groups.pending = sortWithinGroup(groups.pending, 'pending');
+  groups.completed = sortWithinGroup(groups.completed, 'completed');
+  return groups;
+}
+
+function formatCountdown(daysUntil, airdate) {
+  if (daysUntil === 0) return 'Today';
+  if (daysUntil === 1) return 'Tomorrow';
+  if (daysUntil <= 6) {
+    const d = new Date(airdate + 'T00:00:00');
+    return d.toLocaleDateString(undefined, { weekday: 'short' }) + ', ' + daysUntil + ' days';
+  }
+  const d = new Date(airdate + 'T00:00:00');
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+// Given all library items (each with an optional availableOrder), returns
+// the value to assign an item being placed at the TOP of the available
+// group (above everything currently there).
+function nextTopAvailableOrder(items) {
+  const values = items.map(i => i.availableOrder || 0).concat([0]);
+  return Math.min(...values) - 1;
+}
+
+// Same, but for the BOTTOM of the available group.
+function nextBottomAvailableOrder(items) {
+  const values = items.map(i => i.availableOrder || 0).concat([0]);
+  return Math.max(...values) + 1;
+}
+
+// Given a show's full sorted episode list and the "next episode to watch"
+// (as returned by computeShowStatus), returns how many episodes remain in
+// that episode's season, counting the next episode itself as one of them.
+// Specials count toward their season's total same as regular episodes,
+// since sortedEpisodes already places them within their season by airdate.
+function episodesLeftInSeason(episodes, nextEpisode) {
+  if (!nextEpisode) return 0;
+  const seasonEpisodes = episodes.filter(e => e.season === nextEpisode.season);
+  const idx = seasonEpisodes.findIndex(e => e.id === nextEpisode.id);
+  if (idx === -1) return 0;
+  return seasonEpisodes.length - idx;
+}
+
+// Given a show's full sorted episode list and the "next episode to watch",
+// returns { remaining, total }: how many seasons come after the current one
+// (not counting the current season itself), out of how many seasons the
+// show has in total, based on distinct season numbers present in the data.
+function seasonsRemaining(episodes, nextEpisode) {
+  const seasonNumbers = [...new Set(episodes.map(e => e.season))];
+  if (!nextEpisode) return { remaining: 0, total: seasonNumbers.length };
+  const remaining = seasonNumbers.filter(s => s > nextEpisode.season).length;
+  return { remaining, total: seasonNumbers.length };
+}
+
+// A show can be manually "ended" (archived) independent of its actual watch
+// progress or the show's real TVmaze air status - e.g. the user just wants
+// to stop tracking it without deleting their history. When archived, the
+// show always displays in the completed group with no actionable "next
+// episode", regardless of what computeShowStatus would otherwise say.
+// Reactivating (archived: false) simply lets the real status take over
+// again - no separate "un-archive" state is stored beyond the flag itself.
+function withArchiveOverride(status, archived) {
+  if (!archived) return status;
+  return { group: 'completed', nextEpisode: null, archived: true };
+}
+
+// Captures a snapshot of a show's progress at the moment it's archived
+// (manually ended via "Suspend series"), since once archived the show no
+// longer tracks a live "next episode" to derive this from later - the
+// snapshot is what gets displayed on an archived show's row/detail screen
+// from then on, until it's reactivated (at which point it's discarded and
+// the real status takes over again).
+function buildArchiveSnapshot(episodes, watchedEpisodeId, nextEpisode) {
+  const watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
+  const lastWatchedEpisode = watchedIdx === -1 ? null : episodes[watchedIdx];
+  return {
+    lastWatchedCode: lastWatchedEpisode ? formatEpisodeCode(lastWatchedEpisode) : 'Not started',
+    episodesLeftInSeason: episodesLeftInSeason(episodes, nextEpisode),
+    seasonsRemaining: seasonsRemaining(episodes, nextEpisode)
+  };
+}
+
+module.exports = {
+  sortedEpisodes,
+  findWatchedIndex,
+  findEpisodeIdBySeasonNumber,
+  computeShowStatus,
+  groupShows,
+  formatCountdown,
+  isSpecial,
+  formatEpisodeCode,
+  nextTopAvailableOrder,
+  nextBottomAvailableOrder,
+  episodesLeftInSeason,
+  seasonsRemaining,
+  withArchiveOverride,
+  buildArchiveSnapshot
+};

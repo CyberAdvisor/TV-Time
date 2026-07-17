@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>My Shows</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Shows — a free, private TV episode tracker</title>
+<meta name="description" content="Keep track of what to watch next. No install, no hosting, no account, no cost. Your data stays on your own device." />
 <style>
   :root {
     --bg: #ffffff;
@@ -15,6 +16,7 @@
     --accent: #0a66c2;
     --accent-bg: #e8f1fb;
     --danger: #c02020;
+    --danger-bg: #fbeaea;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -27,6 +29,7 @@
       --accent: #6db2ff;
       --accent-bg: #16283b;
       --danger: #ff6b6b;
+      --danger-bg: #2a1616;
     }
   }
   * { box-sizing: border-box; }
@@ -36,1039 +39,244 @@
     background: var(--bg);
     color: var(--text);
     -webkit-font-smoothing: antialiased;
-  }
-  #app {
-    max-width: 480px;
-    margin: 0 auto;
-    padding: env(safe-area-inset-top, 16px) 16px calc(env(safe-area-inset-bottom, 16px) + 16px);
-    min-height: 100vh;
-  }
-  h1 {
-    font-size: 20px;
-    font-weight: 600;
-    margin: 12px 0 16px;
-  }
-  .section-label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: 20px 0 6px;
-    text-transform: none;
-  }
-  .card-list {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-  .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 12px 14px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-  }
-  .row:last-child { border-bottom: none; }
-  .row:active { background: var(--accent-bg); }
-  .row-title {
-    font-size: 15px;
-    font-weight: 500;
-    margin: 0;
-  }
-  .row-title .platform {
-    font-weight: 400;
-    color: var(--text-secondary);
-  }
-  .row-sub {
-    font-size: 13px;
-    color: var(--text-secondary);
-    margin: 3px 0 0;
-    font-family: ui-monospace, "SF Mono", monospace;
-  }
-  .row-right {
-    font-size: 13px;
-    color: var(--text-secondary);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-  button {
-    font-family: inherit;
-    font-size: 14px;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-  }
-  button:active { background: var(--accent-bg); }
-  button.primary {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-    width: 100%;
-    padding: 12px;
-    font-size: 15px;
-  }
-  button.text {
-    border: none;
-    background: none;
-    color: var(--accent);
-    padding: 4px 6px;
-  }
-  input[type="text"], input[type="number"] {
-    font-family: inherit;
-    font-size: 16px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    background: var(--bg);
-    color: var(--text);
-    width: 100%;
-  }
-  .empty {
-    text-align: center;
-    color: var(--text-secondary);
-    padding: 60px 20px;
-    font-size: 15px;
     line-height: 1.6;
   }
-  .top-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 4px;
+  .wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 48px 20px 80px;
   }
-  .icon-btn {
-    border: none;
-    background: none;
-    font-size: 22px;
-    line-height: 1;
-    padding: 4px 8px;
-    color: var(--accent);
-  }
-  .field-label {
+  .eyebrow {
     font-size: 13px;
     color: var(--text-secondary);
-    margin: 0 0 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 0 0 8px;
   }
-  .field { margin-bottom: 16px; }
-  .field-row { display: flex; gap: 10px; }
-  .field-row .field { flex: 1; }
-  .hint { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
-  .search-result {
+  h1 {
+    font-size: 34px;
+    font-weight: 600;
+    margin: 0 0 12px;
+    line-height: 1.2;
+  }
+  .tagline {
+    font-size: 18px;
+    color: var(--text-secondary);
+    margin: 0 0 32px;
+  }
+  h2 {
+    font-size: 21px;
+    font-weight: 600;
+    margin: 48px 0 12px;
+  }
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 20px 0 6px;
+  }
+  p { margin: 0 0 14px; }
+  .lede { font-size: 17px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 8px; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .cta {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
+    padding: 14px 28px;
+    border-radius: 10px;
+    text-decoration: none;
+    margin: 8px 0 4px;
+  }
+  .cta:hover { text-decoration: none; opacity: 0.92; }
+  .cta-row { margin: 28px 0 8px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+  .cta-secondary {
+    display: inline-block;
+    color: var(--accent);
+    font-size: 15px;
+    font-weight: 500;
+    padding: 14px 4px;
+    text-decoration: none;
+  }
+  .cta-secondary:hover { text-decoration: underline; }
+  .top-nav {
+    display: flex;
+    justify-content: flex-end;
+    gap: 20px;
+    font-size: 14px;
+    margin: 0 0 20px;
+  }
+  .top-nav a { color: var(--text-secondary); text-decoration: none; }
+  .top-nav a:hover { color: var(--accent); text-decoration: underline; }
+  .fine-print {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 10px 0 0;
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin: 20px 0;
+  }
+  @media (max-width: 560px) {
+    .card-grid { grid-template-columns: 1fr; }
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .card p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+  .card h3 { margin: 0 0 6px; }
+  .steps { counter-reset: step; list-style: none; padding-left: 0; }
+  .steps li {
+    counter-increment: step;
+    position: relative;
+    padding-left: 34px;
+    margin-bottom: 14px;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--accent-bg);
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 8px;
-    cursor: pointer;
+    justify-content: center;
   }
-  .search-result img {
-    width: 36px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    background: var(--surface);
-    flex-shrink: 0;
+  .limitations {
+    background: var(--danger-bg);
+    border: 1px solid var(--danger);
+    border-radius: 12px;
+    padding: 18px 20px 6px;
   }
-  .search-result.selected {
-    border-color: var(--accent);
-    background: var(--accent-bg);
-  }
-  .search-result-name { font-size: 14px; font-weight: 500; margin: 0; }
-  .search-result-meta { font-size: 12px; color: var(--text-secondary); margin: 2px 0 0; }
-  .detail-table {
-    width: 100%;
-    font-size: 14px;
-    border-collapse: collapse;
+  .limitations h2 { margin-top: 0; color: var(--danger); font-size: 19px; }
+  .limitations li { color: var(--text); }
+  .limitations strong { color: var(--danger); }
+  .disclaimer {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 4px 14px;
+    padding: 18px 20px 6px;
   }
-  .detail-table td { padding: 8px 0; }
-  .detail-table td:first-child { color: var(--text-secondary); }
-  .detail-table td:last-child { text-align: right; }
-  .synopsis { font-size: 14px; line-height: 1.6; margin: 0 0 20px; }
-  .episode-image {
-    width: 100%;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    margin-bottom: 14px;
-    display: block;
-    background: var(--surface);
+  .disclaimer h2 { margin-top: 0; font-size: 19px; }
+  .disclaimer li { color: var(--text-secondary); font-size: 14px; }
+  .donate-badge { margin: 4px 0 20px; }
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--text-muted);
   }
-  .error-text { color: var(--danger); font-size: 13px; margin: 6px 0 0; }
-  .loading { text-align: center; color: var(--text-secondary); padding: 40px; font-size: 14px; }
-  .remove-link { color: var(--danger); font-size: 13px; }
-  .text-link { color: var(--accent); font-size: 13px; }
+  footer a { color: var(--text-secondary); }
+  footer .links { margin-bottom: 8px; }
+  footer .links a { margin-right: 16px; }
 </style>
 </head>
 <body>
-<div id="app"></div>
-
-<script>
-// ---------------------------------------------------------------------
-// Core logic (pure functions, mirrors logic.js / logic.test.js)
-// ---------------------------------------------------------------------
-
-function sortedEpisodes(rawEpisodes) {
-  return rawEpisodes
-    .filter(function (e) { return e.season != null; })
-    .slice()
-    .sort(function (a, b) {
-      if (a.airdate && b.airdate) {
-        if (a.airdate !== b.airdate) return a.airdate.localeCompare(b.airdate);
-        return (a.number == null ? Infinity : a.number) - (b.number == null ? Infinity : b.number);
-      }
-      if (a.airdate && !b.airdate) return -1;
-      if (!a.airdate && b.airdate) return 1;
-      return a.season - b.season || (a.number == null ? Infinity : a.number) - (b.number == null ? Infinity : b.number);
-    });
-}
-
-function isSpecial(episode) {
-  return episode.number == null;
-}
-
-function formatEpisodeCode(episode) {
-  var s = pad(episode.season);
-  if (isSpecial(episode)) return 'S' + s + ' Special';
-  return 'S' + s + 'E' + pad(episode.number);
-}
-
-function findWatchedIndex(episodes, watchedEpisodeId) {
-  if (watchedEpisodeId == null) return -1;
-  return episodes.findIndex(function (e) { return e.id === watchedEpisodeId; });
-}
-
-// Resolves a user-entered season/number (only ever used for regular episodes,
-// since specials aren't nameable this way) to the episode's unique id.
-function findEpisodeIdBySeasonNumber(episodes, season, number) {
-  var match = episodes.find(function (e) { return e.season === season && e.number === number; });
-  return match ? match.id : null;
-}
-
-function computeShowStatus(show, episodes, watchedEpisodeId, today) {
-  today = today || new Date().toISOString().slice(0, 10);
-  var watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
-  var nextIdx = watchedIdx + 1;
-
-  if (nextIdx >= episodes.length) {
-    if (show.status === 'Ended') return { group: 'completed', nextEpisode: null };
-    return { group: 'pending', nextEpisode: null };
-  }
-
-  var nextEpisode = episodes[nextIdx];
-
-  if (!nextEpisode.airdate) return { group: 'pending', nextEpisode: nextEpisode };
-
-  if (nextEpisode.airdate <= today) return { group: 'available', nextEpisode: nextEpisode };
-
-  var daysUntil = Math.round(
-    (new Date(nextEpisode.airdate + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000
-  );
-  return { group: 'upcoming', nextEpisode: nextEpisode, daysUntil: daysUntil };
-}
-
-function sortWithinGroup(entries, group) {
-  if (group === 'upcoming') {
-    return entries.slice().sort(function (a, b) {
-      return a.status.nextEpisode.airdate.localeCompare(b.status.nextEpisode.airdate);
-    });
-  }
-  if (group === 'pending' || group === 'completed') {
-    return entries.slice().sort(function (a, b) {
-      return a.show.name.localeCompare(b.show.name);
-    });
-  }
-  if (group === 'available') {
-    return entries.slice().sort(function (a, b) {
-      return (a.availableOrder || 0) - (b.availableOrder || 0);
-    });
-  }
-  return entries;
-}
-
-function groupShows(showsWithStatus) {
-  var groups = { available: [], upcoming: [], pending: [], completed: [] };
-  for (var i = 0; i < showsWithStatus.length; i++) {
-    groups[showsWithStatus[i].status.group].push(showsWithStatus[i]);
-  }
-  groups.available = sortWithinGroup(groups.available, 'available');
-  groups.upcoming = sortWithinGroup(groups.upcoming, 'upcoming');
-  groups.pending = sortWithinGroup(groups.pending, 'pending');
-  groups.completed = sortWithinGroup(groups.completed, 'completed');
-  return groups;
-}
-
-// Given all library items, the value to assign an item being placed at the
-// TOP of the available group (above everything currently there), or the
-// BOTTOM (below everything currently there).
-function nextTopAvailableOrder(items) {
-  var values = items.map(function (i) { return i.availableOrder || 0; }).concat([0]);
-  return Math.min.apply(null, values) - 1;
-}
-function nextBottomAvailableOrder(items) {
-  var values = items.map(function (i) { return i.availableOrder || 0; }).concat([0]);
-  return Math.max.apply(null, values) + 1;
-}
-
-// Given a show's full sorted episode list and the "next episode to watch"
-// (as returned by computeShowStatus), returns how many episodes remain in
-// that episode's season, counting the next episode itself as one of them.
-function episodesLeftInSeason(episodes, nextEpisode) {
-  if (!nextEpisode) return 0;
-  var seasonEpisodes = episodes.filter(function (e) { return e.season === nextEpisode.season; });
-  var idx = seasonEpisodes.findIndex(function (e) { return e.id === nextEpisode.id; });
-  if (idx === -1) return 0;
-  return seasonEpisodes.length - idx;
-}
-
-// Given a show's full sorted episode list and the "next episode to watch",
-// returns { remaining, total }: how many seasons come after the current one,
-// out of how many seasons the show has in total (distinct season numbers
-// present in the episode data).
-function seasonsRemaining(episodes, nextEpisode) {
-  var seasonNumbers = [];
-  episodes.forEach(function (e) {
-    if (seasonNumbers.indexOf(e.season) === -1) seasonNumbers.push(e.season);
-  });
-  if (!nextEpisode) return { remaining: 0, total: seasonNumbers.length };
-  var remaining = seasonNumbers.filter(function (s) { return s > nextEpisode.season; }).length;
-  return { remaining: remaining, total: seasonNumbers.length };
-}
-
-// A show can be manually "ended" (archived) independent of its actual watch
-// progress or the show's real TVmaze air status - e.g. the user just wants
-// to stop tracking it without deleting their history. When archived, the
-// show always displays in the completed group with no actionable "next
-// episode", regardless of what computeShowStatus would otherwise say.
-function withArchiveOverride(status, archived) {
-  if (!archived) return status;
-  return { group: 'completed', nextEpisode: null, archived: true };
-}
-
-// Captures a snapshot of a show's progress at the moment it's archived,
-// since once archived the show no longer tracks a live "next episode" to
-// derive this from later.
-function buildArchiveSnapshot(episodes, watchedEpisodeId, nextEpisode) {
-  var watchedIdx = findWatchedIndex(episodes, watchedEpisodeId);
-  var lastWatchedEpisode = watchedIdx === -1 ? null : episodes[watchedIdx];
-  return {
-    lastWatchedCode: lastWatchedEpisode ? formatEpisodeCode(lastWatchedEpisode) : 'Not started',
-    episodesLeftInSeason: episodesLeftInSeason(episodes, nextEpisode),
-    seasonsRemaining: seasonsRemaining(episodes, nextEpisode)
-  };
-}
-
-function formatCountdown(daysUntil, airdate) {
-  if (daysUntil === 0) return 'Today';
-  if (daysUntil === 1) return 'Tomorrow';
-  var d = new Date(airdate + 'T00:00:00');
-  if (daysUntil <= 6) {
-    return d.toLocaleDateString(undefined, { weekday: 'short' }) + ', ' + daysUntil + ' days';
-  }
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-function stripHtml(html) {
-  if (!html) return '';
-  var div = document.createElement('div');
-  div.innerHTML = html;
-  return div.textContent || div.innerText || '';
-}
-
-// ---------------------------------------------------------------------
-// Storage
-// ---------------------------------------------------------------------
-
-var STORAGE_KEY = 'my-shows-library-v1';
-
-function loadLibrary() {
-  try {
-    var raw = localStorage.getItem(STORAGE_KEY);
-    var library = raw ? JSON.parse(raw) : [];
-    // Migrate pre-existing entries saved before watched-episode tracking
-    // switched from season/number (ambiguous for specials sharing a season)
-    // to a unique episode id.
-    library.forEach(function (item) {
-      if (item.watchedThrough && item.watchedEpisodeId === undefined) {
-        item.pendingSeasonNumber = item.watchedThrough;
-        item.watchedEpisodeId = null;
-        delete item.watchedThrough;
-      }
-    });
-    return Promise.resolve(library);
-  } catch (e) {
-    return Promise.resolve([]);
-  }
-}
-
-function saveLibrary(library) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(library));
-  } catch (e) {
-    state.errorBanner = 'Could not save. Your device storage may be full or private browsing is on.';
-  }
-  return Promise.resolve();
-}
-
-// ---------------------------------------------------------------------
-// TVmaze API
-// ---------------------------------------------------------------------
-
-function searchShows(query) {
-  return fetch('https://api.tvmaze.com/search/shows?q=' + encodeURIComponent(query))
-    .then(function (r) {
-      if (!r.ok) throw new Error('TVmaze returned ' + r.status);
-      return r.json();
-    });
-}
-
-function fetchShowWithEpisodes(showId) {
-  return Promise.all([
-    fetch('https://api.tvmaze.com/shows/' + showId).then(function (r) { return r.json(); }),
-    fetch('https://api.tvmaze.com/shows/' + showId + '/episodes?specials=1').then(function (r) { return r.json(); })
-  ]).then(function (results) {
-    var show = results[0];
-    var episodes = results[1];
-    show._embedded = { episodes: episodes };
-    return show;
-  });
-}
-
-// ---------------------------------------------------------------------
-// App state
-// ---------------------------------------------------------------------
-
-var state = {
-  view: 'loading', // loading | list | add | detail
-  library: [],
-  computed: {}, // showId -> { show, episodes, status }
-  addFlow: { query: '', results: [], selected: null, platform: '', season: '', episode: '', error: '' },
-  detailShowId: null,
-  errorBanner: ''
-};
-
-var root = document.getElementById('app');
-
-function render() {
-  if (state.view === 'loading') return renderLoading();
-  if (state.view === 'add') return renderAdd();
-  if (state.view === 'detail') return renderDetail();
-  if (state.view === 'backup') return renderBackup();
-  return renderList();
-}
-
-function renderLoading() {
-  root.innerHTML = '<div class="loading">Loading your shows…</div>';
-}
-
-function el(html) {
-  var t = document.createElement('template');
-  t.innerHTML = html.trim();
-  return t.content.firstChild;
-}
-
-// ---------------------------------------------------------------------
-// List view
-// ---------------------------------------------------------------------
-
-function renderList() {
-  var entries = state.library.map(function (item) {
-    var c = state.computed[item.showId];
-    if (!c) return null;
-    var status = withArchiveOverride(c.status, item.archived);
-    return { item: item, show: c.show, status: status, availableOrder: item.availableOrder || 0 };
-  }).filter(Boolean);
-
-  var groups = groupShows(entries.map(function (e) {
-    return { item: e.item, show: e.show, status: e.status, availableOrder: e.availableOrder };
-  }));
-
-  var html = '';
-  html += '<div class="top-bar" style="align-items:flex-start;">' +
-    '<div><h1 style="margin:12px 0 2px;">My Shows</h1><p style="font-size:13px;color:var(--text-secondary);margin:0;">A simple and private show tracker</p></div>' +
-    '<div style="display:flex;gap:4px;padding-top:14px;"><button class="icon-btn" id="backup-btn" aria-label="Backup and restore" style="font-size:18px;">&#8635;</button><button class="icon-btn" id="add-btn" aria-label="Add show">+</button></div>' +
-  '</div>';
-
-  if (state.errorBanner) {
-    html += '<p class="error-text">' + escapeHtml(state.errorBanner) + '</p>';
-  }
-
-  if (entries.length === 0) {
-    html += '<div class="empty">No shows yet.<br>Tap + to add the first one.</div>';
-    root.innerHTML = html;
-    document.getElementById('add-btn').onclick = openAddFlow;
-    document.getElementById('backup-btn').onclick = openBackupFlow;
-    return;
-  }
-
-  html += renderGroup('Available now', groups.available, 'available');
-  html += renderGroup('Upcoming', groups.upcoming, 'upcoming');
-  html += renderGroup('Pending return', groups.pending, 'pending');
-  html += renderGroup('Completed', groups.completed, 'completed');
-
-  root.innerHTML = html;
-  document.getElementById('add-btn').onclick = openAddFlow;
-  document.getElementById('backup-btn').onclick = openBackupFlow;
-
-  entries.forEach(function (e) {
-    var rowEl = document.getElementById('row-' + e.item.showId);
-    if (!rowEl) return;
-    rowEl.onclick = function () { openDetail(e.item.showId); };
-    var markBtn = document.getElementById('mark-' + e.item.showId);
-    if (markBtn) {
-      markBtn.onclick = function (ev) {
-        ev.stopPropagation();
-        markWatched(e.item.showId);
-      };
-    }
-    var reactivateBtn = document.getElementById('reactivate-' + e.item.showId);
-    if (reactivateBtn) {
-      reactivateBtn.onclick = function (ev) {
-        ev.stopPropagation();
-        reactivateShow(e.item.showId);
-      };
-    }
-  });
-}
-
-function renderGroup(label, entries, groupKey) {
-  if (entries.length === 0) return '';
-  var html = '<p class="section-label">' + label + '</p><div class="card-list">';
-  entries.forEach(function (e) {
-    html += renderRow(e, groupKey);
-  });
-  html += '</div>';
-  return html;
-}
-
-function renderRow(e, groupKey) {
-  var item = e.item, show = e.show, status = e.status;
-  var platformText = item.platform ? ' <span class="platform">- ' + escapeHtml(item.platform) + '</span>' : '';
-  var titleHtml = '<p class="row-title">' + escapeHtml(show.name) + platformText + '</p>';
-
-  var subText = '';
-  if (status.archived) {
-    subText = 'Archived' + (item.archivedAt ? ' ' + formatDate(item.archivedAt) : '');
-  } else if (status.nextEpisode) {
-    var code = formatEpisodeCode(status.nextEpisode);
-    subText = code + (status.nextEpisode.name ? ' - ' + escapeHtml(status.nextEpisode.name) : '');
-  } else if (groupKey === 'completed') {
-    subText = 'All episodes watched';
-  } else {
-    subText = 'Renewed - no date yet';
-  }
-
-  var right = '';
-  if (groupKey === 'available') {
-    right = '<button class="text" id="mark-' + item.showId + '">Mark watched</button>';
-  } else if (groupKey === 'upcoming') {
-    right = '<span class="row-right">' + formatCountdown(status.daysUntil, status.nextEpisode.airdate) + '</span>';
-  } else if (status.archived) {
-    right = '<button class="text" id="reactivate-' + item.showId + '">Reactivate</button>';
-  }
-
-  return '<div class="row" id="row-' + item.showId + '">' +
-    '<div>' + titleHtml + '<p class="row-sub">' + subText + '</p></div>' +
-    '<div class="row-right">' + right + '</div>' +
-    '</div>';
-}
-
-function pad(n) { return n < 10 ? '0' + n : '' + n; }
-
-function escapeHtml(str) {
-  var div = document.createElement('div');
-  div.textContent = str == null ? '' : String(str);
-  return div.innerHTML;
-}
-
-// ---------------------------------------------------------------------
-// Detail view
-// ---------------------------------------------------------------------
-
-function openDetail(showId) {
-  state.detailShowId = showId;
-  state.view = 'detail';
-  render();
-}
-
-function renderDetail() {
-  var item = state.library.find(function (i) { return i.showId === state.detailShowId; });
-  var c = state.computed[state.detailShowId];
-  if (!item || !c) { state.view = 'list'; return render(); }
-
-  var status = withArchiveOverride(c.status, item.archived);
-  var ep = status.nextEpisode;
-
-  var html = '';
-  html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button></div>';
-
-  if (ep && ep.image && ep.image.medium) {
-    html += '<img class="episode-image" src="' + escapeHtml(ep.image.medium) + '" alt="" />';
-  }
-
-  html += '<h1 style="margin-bottom:2px;">' + escapeHtml(c.show.name) + '</h1>';
-
-  if (ep) {
-    html += '<p class="row-sub" style="margin-bottom:16px;">' + formatEpisodeCode(ep) + (ep.name ? ' - ' + escapeHtml(ep.name) : '') + '</p>';
-  } else if (status.archived) {
-    html += '<p class="row-sub" style="margin-bottom:16px;">Archived' + (item.archivedAt ? ' ' + formatDate(item.archivedAt) : '') + '</p>';
-  } else {
-    html += '<p class="row-sub" style="margin-bottom:16px;">' + (status.group === 'completed' ? 'All episodes watched' : 'Renewed - no date yet') + '</p>';
-  }
-
-  if (item.platform) {
-    html += '<p class="field-label">Watching on</p><p style="margin:0 0 16px; font-size:15px;">' + escapeHtml(item.platform) + '</p>';
-  }
-
-  if (ep) {
-    html += '<table class="detail-table">';
-    html += '<tr><td>Air date</td><td>' + (ep.airdate ? formatDate(ep.airdate) : 'Unannounced') + '</td></tr>';
-    if (ep.runtime) html += '<tr><td>Runtime</td><td>' + ep.runtime + ' min</td></tr>';
-    html += '<tr><td>Season</td><td>' + ep.season + '</td></tr>';
-    html += '<tr><td>Episodes left in season</td><td>' + episodesLeftInSeason(c.episodes, ep) + '</td></tr>';
-    var seasonsInfo = seasonsRemaining(c.episodes, ep);
-    html += '<tr><td>Seasons remaining</td><td>' + seasonsInfo.remaining + ' of ' + seasonsInfo.total + '</td></tr>';
-    html += '</table>';
-
-    var summary = stripHtml(ep.summary);
-    html += '<p class="field-label" style="margin-top:16px;">Synopsis</p>';
-    html += '<p class="synopsis">' + escapeHtml(summary || 'No synopsis available.') + '</p>';
-
-    if (status.group === 'available') {
-      html += '<button class="primary" id="mark-watched-btn">Mark watched</button>';
-    }
-  } else if (status.archived && item.archivedSnapshot) {
-    var snap = item.archivedSnapshot;
-    html += '<table class="detail-table">';
-    html += '<tr><td>Last watched</td><td>' + escapeHtml(snap.lastWatchedCode) + '</td></tr>';
-    html += '<tr><td>Episodes left in season</td><td>' + snap.episodesLeftInSeason + '</td></tr>';
-    html += '<tr><td>Seasons remaining</td><td>' + snap.seasonsRemaining.remaining + ' of ' + snap.seasonsRemaining.total + '</td></tr>';
-    html += '<tr><td>Archived on</td><td>' + (item.archivedAt ? formatDate(item.archivedAt) : 'Unknown') + '</td></tr>';
-    html += '</table>';
-  }
-
-  html += '<p style="margin-top:24px; text-align:center;">';
-  if (status.archived) {
-    html += '<a href="#" class="text-link" id="reactivate-link">Reactivate series</a>';
-  } else {
-    html += '<a href="#" class="text-link" id="end-series-link">Suspend series</a>';
-  }
-  html += ' &middot; <a href="#" class="remove-link" id="remove-link">Delete series</a></p>';
-
-  root.innerHTML = html;
-  document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
-  var markBtn = document.getElementById('mark-watched-btn');
-  if (markBtn) markBtn.onclick = function () { markWatched(item.showId, true); };
-  document.getElementById('remove-link').onclick = function (ev) {
-    ev.preventDefault();
-    removeShow(item.showId);
-  };
-  var endLink = document.getElementById('end-series-link');
-  if (endLink) endLink.onclick = function (ev) {
-    ev.preventDefault();
-    endSeries(item.showId);
-  };
-  var reactivateLink = document.getElementById('reactivate-link');
-  if (reactivateLink) reactivateLink.onclick = function (ev) {
-    ev.preventDefault();
-    reactivateShow(item.showId);
-  };
-}
-
-function formatDate(airdate) {
-  var d = new Date(airdate + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-// ---------------------------------------------------------------------
-// Add-show flow
-// ---------------------------------------------------------------------
-
-// ---------------------------------------------------------------------
-// Backup / restore
-//
-// iOS does not guarantee localStorage survives indefinitely for
-// home-screen web apps (it can be cleared under storage pressure, after
-// restarts, or after periods of inactivity). This gives the user a way to
-// manually save and restore their data outside of localStorage entirely.
-// ---------------------------------------------------------------------
-
-function openBackupFlow() {
-  state.view = 'backup';
-  render();
-}
-
-// Validates that parsed JSON looks like a library array (used by both file
-// restore and any other restore path, so validation logic lives in one place).
-function isValidLibraryData(parsed) {
-  if (!Array.isArray(parsed)) return false;
-  return parsed.every(function (item) { return item && typeof item.showId === 'number'; });
-}
-
-function downloadBackupFile() {
-  var data = JSON.stringify(state.library, null, 2);
-  var blob = new Blob([data], { type: 'application/json' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url;
-  a.download = 'my-shows-backup-' + new Date().toISOString().slice(0, 10) + '.json';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
-}
-
-function applyRestoredLibrary(parsed) {
-  state.library = parsed;
-  state.computed = {};
-  saveLibrary(state.library);
-  refreshComputedFor(state.library).then(function () {
-    state.view = 'list';
-    render();
-  });
-}
-
-function handleRestoreFile(file) {
-  var statusEl = document.getElementById('restore-status');
-  var reader = new FileReader();
-  reader.onload = function () {
-    var parsed;
-    try {
-      parsed = JSON.parse(reader.result);
-    } catch (e) {
-      statusEl.innerHTML = '<p class="error-text">That file does not look like a valid backup.</p>';
-      return;
-    }
-    if (!isValidLibraryData(parsed)) {
-      statusEl.innerHTML = '<p class="error-text">That file does not look like a valid backup.</p>';
-      return;
-    }
-    statusEl.innerHTML = '';
-    applyRestoredLibrary(parsed);
-  };
-  reader.onerror = function () {
-    statusEl.innerHTML = '<p class="error-text">Could not read that file.</p>';
-  };
-  reader.readAsText(file);
-}
-
-function renderBackup() {
-  var html = '';
-  html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button><h1 style="margin:0;">Backup &amp; restore</h1><span></span></div>';
-
-  html += '<p class="field-label">Backup</p>';
-  html += '<p class="hint" style="margin-bottom:8px;">Save a backup file to this device (e.g. to Files, or iCloud Drive if you want it to sync). If your list ever disappears, restore it from that file below.</p>';
-  html += '<button id="download-backup-btn" style="width:100%;">Download backup file</button>';
-
-  html += '<p class="field-label" style="margin-top:28px;">Restore</p>';
-  html += '<p class="hint" style="margin-bottom:8px;">Pick a previously saved backup file.</p>';
-  html += '<input type="file" id="restore-file-input" accept="application/json,.json" style="display:none;" />';
-  html += '<button id="restore-file-btn" style="width:100%;">Choose backup file</button>';
-  html += '<div id="restore-status"></div>';
-  html += '<p class="hint" style="margin-top:8px;">Restoring replaces your current list on this device with the one in the file.</p>';
-
-  root.innerHTML = html;
-
-  document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
-  document.getElementById('download-backup-btn').onclick = downloadBackupFile;
-  document.getElementById('restore-file-btn').onclick = function () {
-    document.getElementById('restore-file-input').click();
-  };
-  document.getElementById('restore-file-input').onchange = function (e) {
-    var file = e.target.files && e.target.files[0];
-    if (file) handleRestoreFile(file);
-  };
-}
-
-function openAddFlow() {
-  state.addFlow = { query: '', results: [], selected: null, platform: '', season: '', episode: '', error: '', searchStatus: 'idle', searchError: '' };
-  state.view = 'add';
-  render();
-}
-
-function searchResultsHtml() {
-  var af = state.addFlow;
-
-  if (af.searchStatus === 'error') {
-    return '<p class="error-text" style="margin-top:10px;">Search failed: ' + escapeHtml(af.searchError) + '</p>';
-  }
-  if (af.searchStatus === 'empty') {
-    return '<p class="hint" style="margin-top:10px;">No shows found for "' + escapeHtml(af.query) + '".</p>';
-  }
-  if (af.results.length === 0) return '';
-
-  var html = '<div style="margin-top:10px;">';
-  af.results.forEach(function (r) {
-    var s = r.show;
-    var selected = af.selected && af.selected.id === s.id;
-    var year = s.premiered ? s.premiered.slice(0, 4) : '';
-    var network = (s.network && s.network.name) || (s.webChannel && s.webChannel.name) || '';
-    html += '<div class="search-result' + (selected ? ' selected' : '') + '" data-id="' + s.id + '">';
-    html += s.image ? '<img src="' + s.image.medium + '" alt="" />' : '<div style="width:36px;height:50px;flex-shrink:0;"></div>';
-    html += '<div><p class="search-result-name">' + escapeHtml(s.name) + '</p>';
-    html += '<p class="search-result-meta">' + escapeHtml([year, network].filter(Boolean).join(', ')) + '</p></div>';
-    html += '</div>';
-  });
-  html += '</div>';
-  return html;
-}
-
-function bindSearchResultClicks() {
-  state.addFlow.results.forEach(function (r) {
-    var node = document.querySelector('.search-result[data-id="' + r.show.id + '"]');
-    if (node) node.onclick = function () { state.addFlow.selected = r.show; render(); };
-  });
-}
-
-// Updates only the results list below the search input, leaving the input
-// element itself untouched. Replacing the whole screen (including the input)
-// on every keystroke's results caused iOS Safari to drop focus and dismiss
-// the keyboard mid-typing; this keeps the same input DOM node alive.
-function updateSearchResults() {
-  var container = document.getElementById('search-results-container');
-  if (!container) return;
-  container.innerHTML = searchResultsHtml();
-  bindSearchResultClicks();
-}
-
-function renderAdd() {
-  var af = state.addFlow;
-  var html = '';
-  html += '<div class="top-bar"><button class="icon-btn" id="close-btn" aria-label="Close">&times;</button><h1 style="margin:0;">Add show</h1><span></span></div>';
-
-  html += '<p class="field-label">Search</p>';
-  html += '<input type="text" id="search-input" placeholder="Show title" value="' + escapeHtml(af.query) + '" />';
-  html += '<div id="search-results-container">' + searchResultsHtml() + '</div>';
-
-  if (af.selected) {
-    html += '<div class="field" style="margin-top:16px;">';
-    html += '<p class="field-label">Watching on</p>';
-    html += '<input type="text" id="platform-input" placeholder="Hulu" value="' + escapeHtml(af.platform) + '" />';
-    html += '</div>';
-
-    html += '<p class="field-label">Last episode watched</p>';
-    html += '<div class="field-row">';
-    html += '<div class="field"><p class="hint" style="margin:0 0 4px;">Season</p><input type="number" id="season-input" min="0" value="' + escapeHtml(af.season) + '" /></div>';
-    html += '<div class="field"><p class="hint" style="margin:0 0 4px;">Episode</p><input type="number" id="episode-input" min="0" value="' + escapeHtml(af.episode) + '" /></div>';
-    html += '</div>';
-    html += '<p class="hint" style="margin-bottom:16px;">Leave blank if you have not started.</p>';
-
-    if (af.error) html += '<p class="error-text">' + escapeHtml(af.error) + '</p>';
-
-    html += '<button class="primary" id="submit-add-btn">Add show</button>';
-  }
-
-  root.innerHTML = html;
-
-  document.getElementById('close-btn').onclick = function () { state.view = 'list'; render(); };
-
-  var searchInput = document.getElementById('search-input');
-  var searchTimer = null;
-  searchInput.oninput = function (e) {
-    af.query = e.target.value;
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(function () {
-      if (af.query.trim().length < 2) {
-        af.results = [];
-        af.searchStatus = 'idle';
-        updateSearchResults();
-        return;
-      }
-      searchShows(af.query).then(function (results) {
-        af.results = results.slice(0, 8);
-        af.searchStatus = af.results.length === 0 ? 'empty' : 'results';
-        updateSearchResults();
-      }).catch(function (err) {
-        af.results = [];
-        af.searchStatus = 'error';
-        af.searchError = (err && err.message) ? err.message : String(err);
-        updateSearchResults();
-      });
-    }, 350);
-  };
-
-  bindSearchResultClicks();
-
-  if (af.selected) {
-    document.getElementById('platform-input').oninput = function (e) { af.platform = e.target.value; };
-    document.getElementById('season-input').oninput = function (e) { af.season = e.target.value; };
-    document.getElementById('episode-input').oninput = function (e) { af.episode = e.target.value; };
-    document.getElementById('submit-add-btn').onclick = submitAddShow;
-  }
-}
-
-function submitAddShow() {
-  var af = state.addFlow;
-  af.error = '';
-
-  var already = state.library.some(function (i) { return i.showId === af.selected.id; });
-  if (already) {
-    af.error = 'That show is already in your library.';
-    render();
-    return;
-  }
-
-  var hasSeason = af.season !== '' && af.season != null;
-  var hasEpisode = af.episode !== '' && af.episode != null;
-  if (hasSeason !== hasEpisode) {
-    af.error = 'Enter both season and episode, or leave both blank.';
-    render();
-    return;
-  }
-
-  var pendingSeasonNumber = null;
-  if (hasSeason && hasEpisode) {
-    pendingSeasonNumber = { season: parseInt(af.season, 10), number: parseInt(af.episode, 10) };
-  }
-
-  var newItem = {
-    showId: af.selected.id,
-    platform: af.platform.trim(),
-    watchedEpisodeId: null,
-    pendingSeasonNumber: pendingSeasonNumber
-  };
-
-  state.library.push(newItem);
-  saveLibrary(state.library);
-  state.view = 'list';
-  refreshComputedFor([newItem], { isNewAddition: true }).then(render);
-  render(); // optimistic render while episode data loads
-}
-
-// ---------------------------------------------------------------------
-// Actions
-// ---------------------------------------------------------------------
-
-function markWatched(showId, fromDetail) {
-  var item = state.library.find(function (i) { return i.showId === showId; });
-  var c = state.computed[showId];
-  if (!item || !c || !c.status.nextEpisode) return;
-
-  item.watchedEpisodeId = c.status.nextEpisode.id;
-  c.status = computeShowStatus(c.show, c.episodes, item.watchedEpisodeId);
-
-  // If the show is still "available now" (the next-next episode has also
-  // already aired), send it to the bottom of that group rather than letting
-  // it sit at the top indefinitely while other shows wait behind it.
-  if (c.status.group === 'available') {
-    item.availableOrder = nextBottomAvailableOrder(state.library);
-  }
-  saveLibrary(state.library);
-
-  if (fromDetail) {
-    if (c.status.nextEpisode) {
-      render(); // stay on detail, now showing the following episode
-    } else {
-      state.view = 'list';
-      render();
-    }
-  } else {
-    render();
-  }
-}
-
-function removeShow(showId) {
-  state.library = state.library.filter(function (i) { return i.showId !== showId; });
-  delete state.computed[showId];
-  saveLibrary(state.library);
-  state.view = 'list';
-  render();
-}
-
-// Manually ends (archives) a show without deleting it. The show's watch
-// progress and episode data are left untouched - only the archived flag
-// changes - so reactivating later picks up exactly where things left off.
-// A snapshot of "where things stood" is captured at archive time (last
-// watched episode, episodes/seasons remaining, and today's date), since
-// once archived the show no longer tracks a live "next episode" to derive
-// this from.
-function endSeries(showId) {
-  var item = state.library.find(function (i) { return i.showId === showId; });
-  var c = state.computed[showId];
-  if (!item || !c) return;
-
-  item.archived = true;
-  item.archivedAt = new Date().toISOString().slice(0, 10);
-  item.archivedSnapshot = buildArchiveSnapshot(c.episodes, item.watchedEpisodeId, c.status.nextEpisode);
-  saveLibrary(state.library);
-  state.view = 'list';
-  render();
-}
-
-function reactivateShow(showId) {
-  var item = state.library.find(function (i) { return i.showId === showId; });
-  if (!item) return;
-  item.archived = false;
-  delete item.archivedAt;
-  delete item.archivedSnapshot;
-  saveLibrary(state.library);
-  render();
-}
-
-// ---------------------------------------------------------------------
-// Data refresh
-// ---------------------------------------------------------------------
-
-function refreshComputedFor(items, options) {
-  var isNewAddition = options && options.isNewAddition;
-  var promises = items.map(function (item) {
-    return fetchShowWithEpisodes(item.showId).then(function (show) {
-      var episodes = sortedEpisodes(show._embedded && show._embedded.episodes ? show._embedded.episodes : []);
-
-      if (item.pendingSeasonNumber) {
-        var resolvedId = findEpisodeIdBySeasonNumber(episodes, item.pendingSeasonNumber.season, item.pendingSeasonNumber.number);
-        if (resolvedId == null) {
-          state.errorBanner = 'Could not find season ' + item.pendingSeasonNumber.season + ' episode ' + item.pendingSeasonNumber.number + ' for ' + show.name + '. Starting from the beginning.';
-        }
-        item.watchedEpisodeId = resolvedId;
-        delete item.pendingSeasonNumber;
-        saveLibrary(state.library);
-      }
-
-      var status = computeShowStatus(show, episodes, item.watchedEpisodeId);
-
-      if (isNewAddition && status.group === 'available') {
-        item.availableOrder = nextTopAvailableOrder(state.library);
-        saveLibrary(state.library);
-      }
-
-      state.computed[item.showId] = { show: show, episodes: episodes, status: status };
-    }).catch(function () {
-      state.errorBanner = 'Could not load data for one or more shows.';
-    });
-  });
-  return Promise.all(promises);
-}
-
-// ---------------------------------------------------------------------
-// Init
-// ---------------------------------------------------------------------
-
-function init() {
-  loadLibrary().then(function (library) {
-    state.library = library;
-    if (library.length === 0) {
-      state.view = 'list';
-      render();
-      return;
-    }
-    return refreshComputedFor(library).then(function () {
-      state.view = 'list';
-      render();
-    });
-  });
-}
-
-init();
-</script>
+<div class="wrap">
+
+  <nav class="top-nav">
+    <a href="/guide/">How to use</a>
+    <a href="/changelog/">Changelog</a>
+  </nav>
+
+  <p class="eyebrow">My Shows</p>
+  <h1>Always know what episode to watch next.</h1>
+  <p class="tagline">Free. No install. No hosting. No account. Just a page that remembers where you left off.</p>
+
+  <p class="lede">My Shows is a simple TV episode tracker: search for a show, tell it where you left off, and it tells you what's next. It's free for everyone to use — there's nothing to sign up for and nothing to pay for — though donations to help fund my minimal costs are always welcome.</p>
+  <p class="donate-badge"><a href='https://ko-fi.com/Z8O623D716' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi6.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a></p>
+
+  <div class="cta-row">
+    <a class="cta" href="/myshows/">Start tracking your shows →</a>
+    <a class="cta-secondary" href="/guide/">See how it works →</a>
+  </div>
+  <p class="fine-print">Opens straight in your browser. Works on phone, tablet, or desktop. New to it? The <a href="/guide/">how-to-use guide</a> covers everything.</p>
+
+  <h2>Nothing to install. Nothing to host.</h2>
+  <p>This isn't an app you download, and it isn't something you have to set up a server for. It's a single web page that runs entirely in your browser. Open the link, use it, and (optionally) add it to your home screen for quick access — that's just a bookmark shortcut, not a real installation. There's nothing to build, deploy, update, or maintain on your end.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3>Free</h3>
+      <p>No subscription, no ads, no in-app purchases. It costs nothing to use because it costs almost nothing to run.</p>
+    </div>
+    <div class="card">
+      <h3>No install</h3>
+      <p>It's a web page, not an app store download. Open it in any modern browser and it works immediately.</p>
+    </div>
+    <div class="card">
+      <h3>No hosting to set up</h3>
+      <p>It's already hosted. You don't need your own server, domain, or technical setup of any kind.</p>
+    </div>
+  </div>
+
+  <h2>How it works</h2>
+  <ol class="steps">
+    <li>Search for a show by name. Show data comes from <a href="https://www.tvmaze.com" target="_blank" rel="noopener">TVmaze</a>, a free public TV database.</li>
+    <li>Tell it the last episode you watched (or leave it blank if you're starting fresh).</li>
+    <li>It tells you exactly what to watch next, and groups your shows into Available now, Upcoming, Pending return, and Completed.</li>
+    <li>Tap "Mark watched" and it moves on to the next episode automatically.</li>
+  </ol>
+  <p><a href="/guide/">See the full how-to-use guide →</a> (adding a show, the four categories, suspending vs. deleting a series, with pictures.)</p>
+
+  <h2>Your data stays yours</h2>
+  <p>There are no accounts and no server storing your watch list. Everything you track is saved only in your own browser's local storage, on your own device. The only outside request this page ever makes is looking up show and episode information from TVmaze — your list itself is never sent anywhere.</p>
+
+  <div class="limitations">
+    <h2>Limitations — read this before you rely on it</h2>
+    <ul>
+      <li><strong>No sync between devices.</strong> Your watch list lives in one browser on one device. Adding a show on your phone won't make it appear on your laptop, and there's no account to tie them together.</li>
+      <li><strong>Your data can be lost, especially on iOS.</strong> iOS does not guarantee that a website's local storage survives indefinitely — it can be cleared under storage pressure, after a restart, or after a period of inactivity, even for pages added to your home screen. This is an iOS platform limitation, not something this page can prevent.</li>
+      <li><strong>Backups are manual, not automatic.</strong> A backup/restore feature is built in (the ↻ icon), but it only runs when you use it. If you want to protect against the data loss above, download a backup occasionally — especially before an iOS update.</li>
+      <li><strong>No notifications.</strong> Nothing will alert you when a new episode airs — you have to open the page to check.</li>
+      <li><strong>Depends on TVmaze's data.</strong> If a show isn't in TVmaze's database, or its episode data has gaps, that carries through here too.</li>
+    </ul>
+  </div>
+
+  <div class="disclaimer">
+    <h2>No guarantees</h2>
+    <p>This is a free, independently-run hobby project, not a commercial product with a service agreement. It's offered as-is, with none of the following guaranteed:</p>
+    <ul>
+      <li><strong>Availability.</strong> The site could go down temporarily, change, or be discontinued entirely at any time, without notice.</li>
+      <li><strong>Data accuracy.</strong> Show and episode information comes from TVmaze's free public database and isn't independently verified — errors, gaps, or delays in their data carry through here.</li>
+      <li><strong>Data preservation.</strong> As covered above, your watch list can be lost (especially on iOS) and there's no server-side backup to recover it from.</li>
+      <li><strong>Fitness for any particular purpose.</strong> Use it because it's useful to you, not because it's promised to work a certain way.</li>
+    </ul>
+    <p>Use it at your own discretion. If any of this matters a lot to you, keep your own backups (see above) and don't treat this as your only record of what you've watched.</p>
+  </div>
+
+  <div class="cta-row">
+    <a class="cta" href="/myshows/">Start tracking your shows →</a>
+  </div>
+  <p class="fine-print">New to it? See the <a href="/guide/">how-to-use guide</a>.</p>
+
+  <footer>
+    <div class="links">
+      <a href="/guide/">How to use</a>
+      <a href="/changelog/">Changelog</a>
+      <a href="https://github.com/CyberAdvisor/TV-Time" target="_blank" rel="noopener">Source on GitHub</a>
+      <a href="https://www.tvmaze.com" target="_blank" rel="noopener">Powered by TVmaze</a>
+      <a href="https://github.com/CyberAdvisor/TV-Time/issues" target="_blank" rel="noopener">Report an issue</a>
+    </div>
+    <p>Built and maintained by one person as a free hobby project. Found a bug or have a feature request? <a href="https://github.com/CyberAdvisor/TV-Time/issues" target="_blank" rel="noopener">Open an issue on GitHub</a>.</p>
+    <p>The code is open source. If you'd rather run your own private copy instead of using this hosted one, you can — see the source repository for instructions.</p>
+  </footer>
+
+</div>
 </body>
 </html>
