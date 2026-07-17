@@ -80,6 +80,15 @@ The detail screen shows a 16:9 episode still (`.episode-image`) when TVmaze prov
 
 An earlier version silently swallowed search failures (empty results, no explanation) — this was itself a bug that made a real iOS network issue (`Load failed`, likely file:// origin restrictions before GitHub Pages hosting was set up) look like "nothing happens." `af.searchStatus` now tracks `idle` / `results` / `empty` / `error` explicitly, and a real fetch failure shows the actual underlying error message rather than nothing. If you touch the search flow, don't regress back to a bare `.catch(() => {})`.
 
+## Site branding: "My Shows" header and the myshows.fyi footer link
+
+Two small shared HTML snippets, `brandHeaderHtml()` and `siteFooterHtml()` (both in `index.html`, near the top of the render functions), keep the app's branding and a way back to the hosted instructions consistent across every screen:
+
+- `siteFooterHtml()` — a bold, muted link ("About My Shows & how to use") pointing at `https://myshows.fyi`, appended to the bottom of every screen's rendered HTML (list, detail, add, backup). It's hardcoded to `myshows.fyi` rather than derived from `window.location`, so self-hosted copies of this file still point back to the canonical instructions.
+- `brandHeaderHtml()` — a small "My Shows" wordmark shown above the top-bar on every screen *except* the list screen, which already has "My Shows" as its main title and doesn't need a second, smaller copy of it.
+
+If you add a new screen/view, call both of these the same way the existing ones do (`brandHeaderHtml()` near the top, `siteFooterHtml()` appended just before `root.innerHTML = html;`) rather than inlining the HTML again.
+
 ## Episodes left in season / seasons remaining (detail screen)
 
 The detail screen's `.detail-table` includes two rows below "Season":

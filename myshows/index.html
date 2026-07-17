@@ -470,15 +470,25 @@ function renderLoading() {
   root.innerHTML = '<div class="loading">Loading your shows…</div>';
 }
 
-function el(html) {
-  var t = document.createElement('template');
-  t.innerHTML = html.trim();
-  return t.content.firstChild;
-}
-
 // ---------------------------------------------------------------------
 // List view
 // ---------------------------------------------------------------------
+
+// Small "My Shows" brand mark shown above the top-bar on every screen
+// except the list screen itself (which already has "My Shows" as its main
+// title) - keeps the app identifiable when you're a few taps deep.
+function brandHeaderHtml() {
+  return '<p style="font-size:12px; color:var(--text-muted); font-weight:600; letter-spacing:0.02em; margin:0 0 6px;">My Shows</p>';
+}
+
+// Points at the hosted myshows.fyi landing page (which links onward to the
+// how-to-use guide and changelog), not derived from window.location, since
+// self-hosted copies of this file should still point users back to the
+// canonical instructions rather than to wherever they happen to be hosted.
+// Shown at the bottom of every screen.
+function siteFooterHtml() {
+  return '<p style="margin-top:32px; text-align:center;"><a href="https://myshows.fyi" style="color:var(--text-muted); font-size:12px; font-weight:600;">About My Shows &amp; how to use</a></p>';
+}
 
 function renderList() {
   var entries = state.library.map(function (item) {
@@ -502,16 +512,9 @@ function renderList() {
     html += '<p class="error-text">' + escapeHtml(state.errorBanner) + '</p>';
   }
 
-  // Points at the hosted myshows.fyi landing page (which links onward to
-  // the how-to-use guide and changelog), not derived from window.location,
-  // since self-hosted copies of this file should still point users back to
-  // the canonical instructions rather than to wherever they happen to be
-  // hosted.
-  var siteFooter = '<p style="margin-top:32px; text-align:center;"><a href="https://myshows.fyi" style="color:var(--text-muted); font-size:12px;">About My Shows &amp; how to use</a></p>';
-
   if (entries.length === 0) {
     html += '<div class="empty">No shows yet.<br>Tap + to add the first one.</div>';
-    html += siteFooter;
+    html += siteFooterHtml();
     root.innerHTML = html;
     document.getElementById('add-btn').onclick = openAddFlow;
     document.getElementById('backup-btn').onclick = openBackupFlow;
@@ -522,7 +525,7 @@ function renderList() {
   html += renderGroup('Upcoming', groups.upcoming, 'upcoming');
   html += renderGroup('Pending return', groups.pending, 'pending');
   html += renderGroup('Completed', groups.completed, 'completed');
-  html += siteFooter;
+  html += siteFooterHtml();
 
   root.innerHTML = html;
   document.getElementById('add-btn').onclick = openAddFlow;
@@ -618,6 +621,7 @@ function renderDetail() {
   var ep = status.nextEpisode;
 
   var html = '';
+  html += brandHeaderHtml();
   html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button></div>';
 
   if (ep && ep.image && ep.image.medium) {
@@ -672,6 +676,7 @@ function renderDetail() {
     html += '<a href="#" class="text-link" id="end-series-link">Suspend series</a>';
   }
   html += ' &middot; <a href="#" class="remove-link" id="remove-link">Delete series</a></p>';
+  html += siteFooterHtml();
 
   root.innerHTML = html;
   document.getElementById('back-btn').onclick = function () { state.view = 'list'; render(); };
@@ -697,10 +702,6 @@ function formatDate(airdate) {
   var d = new Date(airdate + 'T00:00:00');
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
-
-// ---------------------------------------------------------------------
-// Add-show flow
-// ---------------------------------------------------------------------
 
 // ---------------------------------------------------------------------
 // Backup / restore
@@ -772,6 +773,7 @@ function handleRestoreFile(file) {
 
 function renderBackup() {
   var html = '';
+  html += brandHeaderHtml();
   html += '<div class="top-bar"><button class="icon-btn" id="back-btn" aria-label="Back">&larr;</button><h1 style="margin:0;">Backup &amp; restore</h1><span></span></div>';
 
   html += '<p class="field-label">Backup</p>';
@@ -784,6 +786,7 @@ function renderBackup() {
   html += '<button id="restore-file-btn" style="width:100%;">Choose backup file</button>';
   html += '<div id="restore-status"></div>';
   html += '<p class="hint" style="margin-top:8px;">Restoring replaces your current list on this device with the one in the file.</p>';
+  html += siteFooterHtml();
 
   root.innerHTML = html;
 
@@ -797,6 +800,10 @@ function renderBackup() {
     if (file) handleRestoreFile(file);
   };
 }
+
+// ---------------------------------------------------------------------
+// Add-show flow
+// ---------------------------------------------------------------------
 
 function openAddFlow() {
   state.addFlow = { query: '', results: [], selected: null, platform: '', season: '', episode: '', error: '', searchStatus: 'idle', searchError: '' };
@@ -852,6 +859,7 @@ function updateSearchResults() {
 function renderAdd() {
   var af = state.addFlow;
   var html = '';
+  html += brandHeaderHtml();
   html += '<div class="top-bar"><button class="icon-btn" id="close-btn" aria-label="Close">&times;</button><h1 style="margin:0;">Add show</h1><span></span></div>';
 
   html += '<p class="field-label">Search</p>';
@@ -875,6 +883,8 @@ function renderAdd() {
 
     html += '<button class="primary" id="submit-add-btn">Add show</button>';
   }
+
+  html += siteFooterHtml();
 
   root.innerHTML = html;
 
