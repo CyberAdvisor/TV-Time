@@ -66,7 +66,7 @@ This needs to run from a real `https://` web address rather than being opened as
 
 ### Or use an already-hosted copy
 
-If you'd rather skip hosting it yourself, there's a running instance here: **https://heuristicsecurity.com/TV-Time**
+If you'd rather skip hosting it yourself, there's a running instance here: **https://myshows.fyi**
 
 Your data is still private and local to your own device even using this shared instance — the app has no backend and no database. Every request it makes (aside from looking up show/episode data from TVmaze) stays in your browser's local storage, regardless of which server happens to be serving the static `index.html`/JS files. The same iOS storage-eviction caveat described above still applies either way, since that's about your browser's storage, not about who's hosting the page.
 
