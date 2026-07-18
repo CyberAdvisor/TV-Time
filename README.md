@@ -38,7 +38,8 @@ A single self-contained `index.html` file — plain HTML, CSS, and JavaScript. N
 - **iOS can clear it unexpectedly.** For apps added to the home screen, iOS does not guarantee `localStorage` persists indefinitely — it can be cleared under storage pressure, after a restart, or after a period of inactivity. This is a platform limitation, not something the app can prevent.
 - **Manual backup/restore is built in** for exactly this reason: tap the ↻ icon on the main screen to download a backup file, and restore from it later if your list ever disappears.
 - **No sharing between devices.** Adding a show on your phone doesn't make it appear on your laptop. Each browser/device has its own separate list, though you can move a backup code between devices manually.
-- **Nothing is sent anywhere except TVmaze.** The only network requests this app makes are to `api.tvmaze.com`. Your watch list itself never leaves your device unless you manually copy/paste a backup code somewhere.
+- **Your watch list is never sent anywhere except TVmaze.** The only network requests this app makes for your show/episode data are to `api.tvmaze.com`. Your watch list itself never leaves your device unless you manually copy/paste a backup code somewhere.
+- **The hosted copy at myshows.fyi also loads Cloudflare Web Analytics**, installed to help debug access issues (e.g. confirming the site is actually reachable, spotting outages or broken deploys) rather than to profile individual visitors. It's a cookie-free analytics beacon that reports anonymous page-view/visit counts, country, referrer, and device/browser type back to Cloudflare - it has no persistent visitor id and never sees your watch list. Self-hosted copies of this `index.html` don't need to include it (it's opt-in per copy, not baked into the app logic).
 - **The code being public does not expose your data** — see the hosting note below.
 
 ## Backup and restore

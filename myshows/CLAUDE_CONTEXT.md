@@ -111,6 +111,12 @@ A show can be manually "ended" from the detail screen ("Suspend series" link, ne
 
 If you touch this, don't be tempted to fold `archived` into `computeShowStatus` in `logic.js` - keeping it as a separate override step is what lets reactivating be a simple flag flip rather than needing to recompute or guess at the "real" status. Likewise, don't compute the snapshot fields live on every render of an archived show - that would defeat the purpose (showing what things looked like *at archive time*, not now) and silently break if the show's TVmaze data changes later.
 
+## Cloudflare Web Analytics beacon
+
+`index.html`'s `<head>` includes a Cloudflare Web Analytics `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" ...>` tag, reporting anonymous page-view/visit counts, country, referrer, and device/browser type for the hosted copy at myshows.fyi - no cookies, no persistent visitor id, and it never touches `state.library` or anything in `localStorage`. Documented in the README's data-storage section.
+
+**Placement matters for testing, not just style.** It's deliberately placed in `<head>`, *before* the main inline `<script>` block, not near `</body>` where analytics snippets usually go. `app.test.js` extracts the app's real logic with `html.match(/<script>([\s\S]*)<\/script>/)[1]` - a greedy match from the first literal `<script>` (no attributes) to the *last* `</script>` in the whole file. If this beacon tag (or any other `<script>` tag) were placed after the main script instead, its closing `</script>` would become the new "last" one, and the regex would sweep the beacon tag's opening `<script type="module" ...>` text into the extracted body, breaking `window.eval(scriptBody)` with a syntax error and failing every test. If you add another `<script>` tag to this file for any reason, put it above the main inline script, not below it.
+
 ## Testing
 
 - `logic.js` — pure functions (sorting, status computation, grouping, id resolution, remaining-episode/season counts), no DOM/fetch dependencies.
